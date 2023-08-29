@@ -20,4 +20,4 @@ skin\method.lua
 UnitFramesImproved_TBC.lua
 
 extramana.lua
--- energy.lua
+energyandmanaticks.lua

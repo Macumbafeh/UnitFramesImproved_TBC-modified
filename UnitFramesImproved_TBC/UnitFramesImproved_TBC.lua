@@ -355,7 +355,7 @@ SlashCmdList["UNITFRAMESIMPROVED"] = function(msg, editBox)
 	if(table.getn(tokens) > 0 and strlower(tokens[1]) == "reset") then
 		StaticPopup_Show("LAYOUT_RESET");
 	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "settings") then
-		InterfaceOptionsFrame_OpenToCategory(UnitFramesImproved.panelSettings);
+		InterfaceOptionsFrame_Show(UnitFramesImproved.panelSettings);
 	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "scale") then
 		if(table.getn(tokens) > 1) then
 			UnitFramesImproved_SetFrameScale(tokens[2]);
@@ -521,17 +521,21 @@ function UnitFramesImproved_TargetFrame_CheckFaction(self)
 	--dout(UnitClass("target")); -- For debug purpose
 	if ( UnitIsPVPFreeForAll("target") ) then
 		TargetPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA");
+		PlayerPVPIcon:Hide()
 		TargetPVPIcon:Hide();
 		for i=1,4 do _G["PartyMemberFrame"..i.."PVPIcon"]:Hide()end
 	elseif ( factionGroup and UnitIsPVP(this.unit) and UnitIsEnemy("player", this.unit) ) then
 		TargetPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA");
+		PlayerPVPIcon:Hide()
 		TargetPVPIcon:Hide();
 		for i=1,4 do _G["PartyMemberFrame"..i.."PVPIcon"]:Hide()end
 	elseif ( factionGroup == "Alliance" or factionGroup == "Horde" ) then
 		TargetPVPIcon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup);
+		PlayerPVPIcon:Hide()
 		TargetPVPIcon:Hide();
 		for i=1,4 do _G["PartyMemberFrame"..i.."PVPIcon"]:Hide()end
 	else
+		PlayerPVPIcon:Hide()
 		TargetPVPIcon:Hide();
 		for i=1,4 do _G["PartyMemberFrame"..i.."PVPIcon"]:Hide()end
 	end
