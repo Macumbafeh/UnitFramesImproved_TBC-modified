@@ -1,5 +1,6 @@
 -- Credits to stassart on curse.com for suggesting to use InCombatLockdown() checks in the code
 
+local ADDON_NAME = "UnitFramesImproved"
 -- Debug function. Adds message to the chatbox (only visible to the loacl player)
 function dout(msg)
 	DEFAULT_CHAT_FRAME:AddMessage(msg);
@@ -28,11 +29,270 @@ function tokenize(str)
 	return tbl;
 end
 
+-- Default UnitFramesImprovedDB
+local defaultUnitFramesImprovedDB = {
+    ManaBarTicks = true,
+	ClassTargetColor = false,
+	ClassFriendlyTargetColor = false,
+	targetframeflash = false,
+	playerframe = 1.3,
+	targetframe = 1.3,
+	focusframe = 1.3,
+	buffframe = 1.6,
+	partyframe = 1.6,
+}
+
+
+-- Saved variables
+UnitFramesImprovedDB = UnitFramesImprovedDB or {}
+
 -- Create the addon main instance
 local UnitFramesImproved = CreateFrame('Button', 'UnitFramesImproved');
 
+
+-- Interface options
+local options = {
+    type = "group",
+    name = ADDON_NAME,
+	width = "full",
+    args = {
+	   
+	   optionframe = {
+         type = "group",
+         name = "Toggle Options",
+         inline = true,
+         order = 1,
+		 width = "full",
+         args = {
+		 
+        ManaBarTicks = {
+			type = "toggle",
+			name = "Enable Mana Bar ticks",
+			desc = "Toggle ticks on Mana bar for druids",
+			order = 0,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.ManaBarTicks == nil then
+					UnitFramesImprovedDB.ManaBarTicks = defaultUnitFramesImprovedDB.ManaBarTicks -- Set the default index
+				end
+					return UnitFramesImprovedDB.ManaBarTicks
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.ManaBarTicks = value
+			end,
+				},
+				
+		ClassTargetColor = {
+			type = "toggle",
+			name = "Enable Class Color on Enemy Target",
+			desc = "Toggle Class Color on Enemy Target",
+			order = 1,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.ClassTargetColor == nil then
+					UnitFramesImprovedDB.ClassTargetColor = defaultUnitFramesImprovedDB.ClassTargetColor -- Set the default index
+				end
+					return UnitFramesImprovedDB.ClassTargetColor
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.ClassTargetColor = value
+			end,
+				},
+		ClassFriendlyTargetColor = {
+			type = "toggle",
+			name = "Enable Class Color on Friendly Players",
+			desc = "Toggle Class Color on Friendly Players",
+			order = 2,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.ClassFriendlyTargetColor == nil then
+					UnitFramesImprovedDB.ClassFriendlyTargetColor = defaultUnitFramesImprovedDB.ClassFriendlyTargetColor -- Set the default index
+				end
+					return UnitFramesImprovedDB.ClassFriendlyTargetColor
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.ClassFriendlyTargetColor = value
+			end,
+				},
+		targetframeflash = {
+			type = "toggle",
+			name = "Disable TargetFrameFlash",
+			desc = "Disable TargetFrameFlash on Target Frame",
+			order = 3,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.targetframeflash == nil then
+					UnitFramesImprovedDB.targetframeflash = defaultUnitFramesImprovedDB.targetframeflash -- Set the default index
+				end
+					return UnitFramesImprovedDB.targetframeflash
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.targetframeflash = value
+			end,
+				},
+	},
+},
+	optionframetwo = {
+         type = "group",
+         name = "Frame Options",
+         inline = true,
+         order = 2,
+		 width = "full",
+         args = {
+		
+		playerframe = {
+            type = "range",
+            name = "Player Frame scale",
+			order = 1,
+			-- width = "full",
+            desc = "Set the scale of the Player Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.playerframe == nil then
+				UnitFramesImprovedDB.playerframe = defaultUnitFramesImprovedDB.playerframe -- Set the default index for the harmful spells
+				end
+                return UnitFramesImprovedDB.playerframe
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.playerframe = value
+            end
+				},
+		targetframe = {
+            type = "range",
+            name = "Target Frame scale",
+			order = 2,
+			-- width = "full",
+            desc = "Set the scale of the Target Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.targetframe == nil then
+				UnitFramesImprovedDB.targetframe = defaultUnitFramesImprovedDB.targetframe -- Set the default index for the harmful spells
+				end
+                return UnitFramesImprovedDB.targetframe
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.targetframe = value
+            end
+				},
+		focusframe = {
+            type = "range",
+            name = "Focus Frame scale",
+			order = 3,
+			-- width = "full",
+            desc = "Set the scale of the Focus Frame (FocusFrame or ExtendedUnitFrame addon are needed!)",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.focusframe == nil then
+				UnitFramesImprovedDB.focusframe = defaultUnitFramesImprovedDB.focusframe -- Set the default index for the harmful spells
+				end
+                return UnitFramesImprovedDB.focusframe
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.focusframe = value
+            end
+				},
+		buffframe = {
+            type = "range",
+            name = "Buff Frame scale",
+			order = 4,
+			-- width = "full",
+            desc = "Set the scale of the Buff Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.buffframe == nil then
+				UnitFramesImprovedDB.buffframe = defaultUnitFramesImprovedDB.buffframe -- Set the default index for the harmful spells
+				end
+                return UnitFramesImprovedDB.buffframe
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.buffframe = value
+            end
+				},
+		partyframe = {
+            type = "range",
+            name = "Party Frame scale",
+			order = 5,
+			-- width = "full",
+            desc = "Set the scale of the Party Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.partyframe == nil then
+				UnitFramesImprovedDB.partyframe = defaultUnitFramesImprovedDB.partyframe -- Set the default index for the harmful spells
+				end
+                return UnitFramesImprovedDB.partyframe
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.partyframe = value
+            end
+				},
+		SaveAndReload = {
+    type = "execute",
+    name = "Save & Reload",
+    desc = "Save the settings and reload the UI, if you have some issue click on this button to reload the game",
+    func = function()
+        StaticPopupDialogs["CONFIRM_RELOADUI"] = {
+            text = "Are you sure you want to reload the UI?",
+            button1 = "Yes",
+            button2 = "No",
+            OnAccept = function()
+                ReloadUI()
+            end,
+            OnCancel = function()
+                -- Do nothing if the user cancels
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3, -- Ensure the dialog appears above other UI elements
+        }
+
+        StaticPopup_Show("CONFIRM_RELOADUI")
+    end,
+    order = 10,
+		},
+			},
+		},
+	},
+}
+
+-- Function to register options
+local function RegisterOptions()
+    LibStub("AceConfig-3.0"):RegisterOptionsTable(ADDON_NAME, options)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME, ADDON_NAME)
+end
+
+
+-- Call function to register options
+RegisterOptions()
+
 -- Event listener to make sure we enable the addon at the right time
 function UnitFramesImproved:PLAYER_ENTERING_WORLD()
+	if not UnitFramesImprovedDB.playerframe then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	if not UnitFramesImprovedDB.targetframe then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	if not UnitFramesImprovedDB.focusframe then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	if not UnitFramesImprovedDB.buffframe then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	if not UnitFramesImprovedDB.partyframe then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	
 	-- Set some default settings
 	if (characterSettings == nil) then
 		UnitFramesImproved_LoadDefaultSettings();
@@ -40,17 +300,19 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	
 	EnableUnitFramesImproved();
 		-- Interface
-BuffFrame:SetScale(1.6)
+BuffFrame:SetScale(UnitFramesImprovedDB.buffframe)
 
 
 for i=1,4 do _G["PartyMemberFrame"..i.."HealthBarText"]:SetFont("Fonts\\FRIZQT__.TTF", 7, "OUTLINE")end
 for i=1,4 do _G["PartyMemberFrame"..i.."HealthBarText"]:SetPoint("TOP", 20, -13)end
 for i=1,4 do _G["PartyMemberFrame"..i.."ManaBarText"]:SetFont("Fonts\\FRIZQT__.TTF", 7, "OUTLINE")end
-for i=1,4 do _G["PartyMemberFrame"..i]:SetScale(1.6)end
+for i=1,4 do _G["PartyMemberFrame" .. i]:SetScale(UnitFramesImprovedDB.partyframe)end
+
+
 for i=1,4 do _G["PartyMemberFrame"..i.."Name"]:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")end
 for i=1,4 do _G["PartyMemberFrame"..i.."PVPIcon"]:Hide()end
 
-PlayerFrame:SetScale(1.3) 
+PlayerFrame:SetScale(UnitFramesImprovedDB.playerframe) 
 PlayerPVPIcon:Hide()
 PlayerName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 PlayerName:SetPoint("CENTER",50,38);
@@ -58,7 +320,7 @@ PlayerFrameHealthBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 PlayerFrameHealthBarText:SetPoint("CENTER", 50, 13);
 PlayerFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 
-TargetFrame:SetScale(1.3) 
+TargetFrame:SetScale(UnitFramesImprovedDB.targetframe) 
 TargetPVPIcon:Hide()
 TargetName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 TargetName:SetPoint("CENTER",-50,38);
@@ -66,13 +328,21 @@ TargetFrameHealthBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 TargetFrameHealthBarText:SetPoint("TOP", -50,-33);
 TargetFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 
+FocusFrame:SetScale(UnitFramesImprovedDB.focusframe)
 FocusName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 FocusName:SetPoint("CENTER",-50,38);
 FocusFrameHealthBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 FocusFrameHealthBarText:SetPoint("TOP", -50,-31);
 FocusFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 
--- TargetFrameFlash:SetAlpha(0)
+	if UnitFramesImprovedDB.targetframeflash then
+		TargetFrameFlash:SetAlpha(0)
+	else
+		TargetFrameFlash:SetAlpha(1)
+	end
+	
+ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
+
 end
 
 -- Event listener to make sure we've loaded our settings and thta we apply them
@@ -136,7 +406,7 @@ function EnableUnitFramesImproved()
 	--hooksecurefunc("FocusFrame_OnUpdate", UnitFramesImproved_FocusFrame_Update);
 	hooksecurefunc("FocusFrame_CheckFaction", UnitFramesImproved_FocusFrame_CheckFaction);
 	hooksecurefunc("FocusFrame_CheckClassification", UnitFramesImproved_FocusFrame_CheckClassification);
-	--hooksecurefunc("FocusofTarget_Update", UnitFramesImproved_FocusFrame_Update);
+	hooksecurefunc("TargetofFocus_Update", UnitFramesImproved_FocusFrame_Update);
 	
 	-- BossFrame hooks
 	--hooksecurefunc("BossTargetFrame_OnLoad", UnitFramesImproved_BossTargetFrame_Style);
@@ -223,6 +493,38 @@ function UnitFramesImproved_Style_TargetOfFocusFrame()
 	if not InCombatLockdown() then 
 		TargetofFocusHealthBar.lockColor = true;
 		TargetofFocusFrame.portrait:SetPoint("CENTER",20,0);
+		
+		hooksecurefunc("TargetofFocus_Update", function()
+            local targetFocusUnit = "focustarget";
+            local isTapped = UnitIsTapped(targetFocusUnit);
+            local isTappedByPlayer = UnitIsTappedByPlayer(targetFocusUnit);
+            local reaction = UnitReaction("focustarget", "player");
+            
+            if isTapped and not isTappedByPlayer then
+                -- Tapped by other players, set health bar color to gray
+                TargetofFocusHealthBar:SetStatusBarColor(0.5, 0.5, 0.5);
+            else
+                local isPlayerControlled = UnitPlayerControlled(targetFocusUnit);
+                if isPlayerControlled then
+                    -- Player-controlled target's target, set health bar color based on class etc.
+                    TargetofFocusHealthBar:SetStatusBarColor(UnitColorToT(targetFocusUnit));
+                else
+                    local canAttack = UnitCanAttack("player", targetFocusUnit);
+                    if (canAttack and reaction and not reaction == 4) or (canAttack and reaction and reaction <= 3)  then
+                        -- Enemy target's target, set health bar color to red
+                        TargetofFocusHealthBar:SetStatusBarColor(1, 0, 0);
+                    else
+                        if reaction and reaction == 4 then
+						-- Neutral target's target, set health bar color to yellow
+                            TargetofFocusHealthBar:SetStatusBarColor(1, 1, 0);
+                        elseif reaction and reaction >= 4 then
+                             -- Friendly target's target, set health bar color to green
+                            TargetofFocusHealthBar:SetStatusBarColor(0, 1, 0);
+                        end
+                    end
+                end
+            end
+        end);
 	end
 end
 
@@ -259,7 +561,7 @@ function UnitFramesImproved_Style_TargetFrame(self)
 			TargetFrameManaBar:SetPoint("TOPLEFT",6,-51);
 
 			TargetFrameHealthBar.TextString:SetPoint("CENTER",-50,4);
-			TargetDeadText:SetPoint("CENTER",-50,4);
+			TargetDeadText:SetPoint("CENTER",-50,13);
 			--TargetFrameNameBackground:SetPoint("TOPLEFT",7,-41);
 			TargetFrameNameBackground:Hide();
 		else
@@ -269,7 +571,7 @@ function UnitFramesImproved_Style_TargetFrame(self)
 			TargetFrameManaBar:SetPoint("TOPLEFT",6,-51);
 
 			TargetFrameHealthBar.TextString:SetPoint("CENTER",-50,6);
-			TargetDeadText:SetPoint("CENTER",-50,6);
+			TargetDeadText:SetPoint("CENTER",-50,13);
 			TargetFrameNameBackground:Hide();
 			--TargetFrameNameBackground:SetPoint("TOPLEFT",7,-22);
 		end
@@ -289,7 +591,7 @@ function UnitFramesImproved_Style_FocusFrame(self)
 			FocusFrameManaBar:SetPoint("TOPLEFT",6,-51);
 
 			FocusFrameHealthBar.TextString:SetPoint("CENTER",-50,4);
-			FocusDeadText:SetPoint("CENTER",-50,4);
+			FocusDeadText:SetPoint("CENTER",-50,13);
 			--FocusFrameNameBackground:SetPoint("TOPLEFT",7,-41);
 			FocusFrameNameBackground:Hide();
 		else
@@ -299,7 +601,7 @@ function UnitFramesImproved_Style_FocusFrame(self)
 			FocusFrameManaBar:SetPoint("TOPLEFT",6,-51);
 
 			FocusFrameHealthBar.TextString:SetPoint("CENTER",-50,6);
-			FocusDeadText:SetPoint("CENTER",-50,6);
+			FocusDeadText:SetPoint("CENTER",-50,13);
 			FocusFrameNameBackground:Hide();
 			--FocusFrameNameBackground:SetPoint("TOPLEFT",7,-22);
 		end
@@ -347,6 +649,7 @@ function UnitFramesImproved_SetFrameScale(scale)
 	end
 end
 
+
 -- Slashcommand stuff
 SLASH_UNITFRAMESIMPROVED1 = "/unitframesimproved";
 SLASH_UNITFRAMESIMPROVED2 = "/ufi";
@@ -362,14 +665,21 @@ SlashCmdList["UNITFRAMESIMPROVED"] = function(msg, editBox)
 		else
 			dout("Please supply a number, between 0.0 and 10.0 as the second parameter.");
 		end
+	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "gui") then
+		InterfaceOptionsFrame_OpenToFrame(ADDON_NAME)
 	else
 		dout("Valid commands for UnitFramesImproved are:")
 		dout("    help    (shows this message)");
 		dout("    scale # (scales the player frames)");
 		dout("    reset   (resets the scale of the player frames)");
+		dout("    gui   (Open the interface option panel)");
 		dout("");
 	end
 end
+
+
+
+
 
 -- Setup the static popup dialog for resetting the UI
 StaticPopupDialogs["LAYOUT_RESET"] = {
@@ -578,7 +888,7 @@ function UnitColor(unit)
             -- Color NPCs using the background color
             r, g, b = sr, sg, sb;
         end
-    elseif (UnitIsPlayer(unit) and UnitIsFriend("player", unit)) then
+    elseif (UnitIsPlayer(unit) and UnitIsFriend("player", unit) and UnitFramesImprovedDB.ClassFriendlyTargetColor) or (UnitFramesImprovedDB.ClassTargetColor and UnitIsPlayer(unit) and not UnitIsFriend("player", unit)) then
         if (classColor) then
             r, g, b = classColor.r, classColor.g, classColor.b;
         else
@@ -590,7 +900,17 @@ function UnitColor(unit)
             r, g, b = 0.5, 0.5, 0.5;
 		end
     else
-        r, g, b = 1.0, 0.0, 0.0; -- Color enemy players as red
+        if UnitFramesImprovedDB.ClassTargetColor then
+			r, g, b = 0, 1.0, 0.0; -- Color friendly players as green
+		elseif UnitFramesImprovedDB.ClassFriendlyTargetColor then
+			r, g, b = 1.0, 0.0, 0.0; -- Color enemy players as red
+		else
+			if UnitIsPlayer(unit) and UnitIsFriend("player", unit) then
+				r, g, b = 0, 1.0, 0.0; -- Color friendly players as green
+			elseif UnitIsPlayer(unit) and not UnitIsFriend("player", unit) then
+				r, g, b = 1.0, 0.0, 0.0; -- Color enemy players as red
+			end
+		end
     end
 	
     return r, g, b;

@@ -73,7 +73,7 @@
     energytick:RegisterEvent("UNIT_ENERGY")
     energytick:RegisterEvent("UNIT_MANA")
     energytick:SetScript("OnEvent", function()
-      if UnitPowerType("player") == 3 then
+      if UnitPowerType("player") == 3 and UnitFramesImprovedDB.ManaBarTicks then
         this.mode = "MANA"
         -- hide if full mana and not in combat
         if (UnitMana("player") == UnitManaMax("player")) and (not UnitAffectingCombat("player")) then
