@@ -40,6 +40,8 @@ local defaultUnitFramesImprovedDB = {
 	focusframe = 1.3,
 	buffframe = 1.6,
 	partyframe = 1.6,
+	largeBuffSize = LARGE_BUFF_SIZE,
+	smallBuffSize = SMALL_BUFF_SIZE,
 }
 
 
@@ -235,6 +237,38 @@ local options = {
                 UnitFramesImprovedDB.partyframe = value
             end
 				},
+		largeBuffSize = {
+				order = 6,
+				name = "Large buff size",
+				desc = "Set the size of your own debuff on the Target Frame",
+				type = "range",
+				min = 10, max = 50, step = 1,
+				get = function()
+				if UnitFramesImprovedDB.largeBuffSize == nil then
+				UnitFramesImprovedDB.largeBuffSize = defaultUnitFramesImprovedDB.largeBuffSize 
+				end
+                return UnitFramesImprovedDB.largeBuffSize
+			end,
+            set = function(info, value)
+                UnitFramesImprovedDB.largeBuffSize = value
+            end
+			},
+		smallBuffSize = {
+				order = 7,
+				name = "Small buff size",
+				type = "range",
+				desc = "Set the size of other players debuff on the Target Frame",
+				min = 10, max = 50, step = 1,
+				get = function()
+				if UnitFramesImprovedDB.smallBuffSize == nil then
+				UnitFramesImprovedDB.smallBuffSize = defaultUnitFramesImprovedDB.smallBuffSize 
+				end
+                return UnitFramesImprovedDB.smallBuffSize
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.smallBuffSize = value
+            end
+			},
 		SaveAndReload = {
     type = "execute",
     name = "Save & Reload",
@@ -292,6 +326,12 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	if not UnitFramesImprovedDB.partyframe then
         UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
     end
+	if not UnitFramesImprovedDB.largeBuffSize then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
+	if not UnitFramesImprovedDB.smallBuffSize then
+        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+    end
 	
 	-- Set some default settings
 	if (characterSettings == nil) then
@@ -343,8 +383,17 @@ FocusFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 	
 ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
 
+self:ReloadVisual("largeBuffSize")
+self:ReloadVisual("smallBuffSize")
 end
 
+function UnitFramesImproved:ReloadVisual(arg)
+if (arg == "largeBuffSize") then
+		LARGE_BUFF_SIZE = UnitFramesImprovedDB.largeBuffSize
+elseif (arg == "smallBuffSize") then
+		SMALL_BUFF_SIZE = UnitFramesImprovedDB.smallBuffSize
+end
+end
 -- Event listener to make sure we've loaded our settings and thta we apply them
 function UnitFramesImproved:VARIABLES_LOADED()
 	dout("UnitFramesImproved settings loaded!");
