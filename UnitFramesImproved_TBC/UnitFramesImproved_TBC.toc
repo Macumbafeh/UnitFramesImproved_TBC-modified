@@ -4,7 +4,7 @@
 ## Version: 0.2
 ## Author: Ko0z (Richard) TBC backport, Originally by: Althalla (Kim Forsberg), modified by Macumba
 ## SavedVariables: globalSettings
-## SavedVariablesPerCharacter: characterSettings, UnitFramesImprovedDB
+## SavedVariablesPerCharacter: characterSettings, UnitFramesImprovedDB, UnitFramesImproved_config
 ## OptionalDeps: ExtendedUF, FocusFrame
 ## X-License: Public Domain
 ## X-Category: Unit Frames

@@ -42,11 +42,15 @@ local defaultUnitFramesImprovedDB = {
 	partyframe = 1.6,
 	largeBuffSize = LARGE_BUFF_SIZE,
 	smallBuffSize = SMALL_BUFF_SIZE,
+	targetdebuffsperrow = TARGET_DEBUFFS_PER_ROW,
+	EnableGrid = false,
+	GridSize = 30,
+	enablemoveunitframe = false,
 }
 
 
 -- Saved variables
-UnitFramesImprovedDB = UnitFramesImprovedDB or {}
+UnitFramesImprovedDB = UnitFramesImprovedDB or {defaultUnitFramesImprovedDB}
 
 -- Create the addon main instance
 local UnitFramesImproved = CreateFrame('Button', 'UnitFramesImproved');
@@ -132,6 +136,22 @@ local options = {
 				UnitFramesImprovedDB.targetframeflash = value
 			end,
 				},
+		enablemoveunitframe = {
+			type = "toggle",
+			name = "Enable/disable the Move Frame feature",
+			desc = "Drag them with shift or ctrl and left click",
+			order = 4,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.enablemoveunitframe == nil then
+					UnitFramesImprovedDB.enablemoveunitframe = defaultUnitFramesImprovedDB.enablemoveunitframe -- Set the default index
+				end
+					return UnitFramesImprovedDB.enablemoveunitframe
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.enablemoveunitframe = value
+			end,
+				},
 	},
 },
 	optionframetwo = {
@@ -153,7 +173,7 @@ local options = {
             step = 0.1,
             get = function()
 				if UnitFramesImprovedDB.playerframe == nil then
-				UnitFramesImprovedDB.playerframe = defaultUnitFramesImprovedDB.playerframe -- Set the default index for the harmful spells
+				UnitFramesImprovedDB.playerframe = defaultUnitFramesImprovedDB.playerframe 
 				end
                 return UnitFramesImprovedDB.playerframe
             end,
@@ -172,7 +192,7 @@ local options = {
             step = 0.1,
             get = function()
 				if UnitFramesImprovedDB.targetframe == nil then
-				UnitFramesImprovedDB.targetframe = defaultUnitFramesImprovedDB.targetframe -- Set the default index for the harmful spells
+				UnitFramesImprovedDB.targetframe = defaultUnitFramesImprovedDB.targetframe 
 				end
                 return UnitFramesImprovedDB.targetframe
             end,
@@ -191,7 +211,7 @@ local options = {
             step = 0.1,
             get = function()
 				if UnitFramesImprovedDB.focusframe == nil then
-				UnitFramesImprovedDB.focusframe = defaultUnitFramesImprovedDB.focusframe -- Set the default index for the harmful spells
+				UnitFramesImprovedDB.focusframe = defaultUnitFramesImprovedDB.focusframe
 				end
                 return UnitFramesImprovedDB.focusframe
             end,
@@ -210,7 +230,7 @@ local options = {
             step = 0.1,
             get = function()
 				if UnitFramesImprovedDB.buffframe == nil then
-				UnitFramesImprovedDB.buffframe = defaultUnitFramesImprovedDB.buffframe -- Set the default index for the harmful spells
+				UnitFramesImprovedDB.buffframe = defaultUnitFramesImprovedDB.buffframe 
 				end
                 return UnitFramesImprovedDB.buffframe
             end,
@@ -229,7 +249,7 @@ local options = {
             step = 0.1,
             get = function()
 				if UnitFramesImprovedDB.partyframe == nil then
-				UnitFramesImprovedDB.partyframe = defaultUnitFramesImprovedDB.partyframe -- Set the default index for the harmful spells
+				UnitFramesImprovedDB.partyframe = defaultUnitFramesImprovedDB.partyframe 
 				end
                 return UnitFramesImprovedDB.partyframe
             end,
@@ -269,6 +289,22 @@ local options = {
                 UnitFramesImprovedDB.smallBuffSize = value
             end
 			},
+		targetdebuffsperrow = {
+				order = 8,
+				name = "Target debuffs per row",
+				type = "range",
+				desc = "Set the amount of debuffs per lines",
+				min = 2, max = 8, step = 1,
+				get = function()
+				if UnitFramesImprovedDB.targetdebuffsperrow == nil then
+				UnitFramesImprovedDB.targetdebuffsperrow = defaultUnitFramesImprovedDB.targetdebuffsperrow 
+				end
+                return UnitFramesImprovedDB.targetdebuffsperrow
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.targetdebuffsperrow = value
+            end
+			},
 		SaveAndReload = {
     type = "execute",
     name = "Save & Reload",
@@ -294,8 +330,90 @@ local options = {
     end,
     order = 10,
 		},
-			},
+	},
 		},
+	optionframethree = {
+         type = "group",
+         name = "Grid Options",
+         inline = true,
+         order = 3,
+		 width = "full",
+         args = {
+		EnableGrid = {
+                    type = "toggle",
+                    name = "Enable Grid",
+                    desc = "Toggle the grid on or off.",
+                    order = 0,
+                    width = "full",
+                    get = function()
+                        if UnitFramesImprovedDB.EnableGrid == nil then
+                            UnitFramesImprovedDB.EnableGrid = defaultUnitFramesImprovedDB.EnableGrid
+                        end
+                        return UnitFramesImprovedDB.EnableGrid
+                    end,
+                    set = function(_, value)
+                        UnitFramesImprovedDB.EnableGrid = value
+                        if value then
+							if not grid then
+								UnitFramesImproved:CreateGrid(UnitFramesImprovedDB.GridSize)
+							else
+								grid:Show()  -- Show the existing grid frame
+							end
+						else
+							if grid then
+								grid:Hide()  -- Hide the grid frame
+							end
+						end
+					end,
+                },
+                GridSize = {
+						type = "input",
+						name = "Grid Size",
+				        desc = "Set the size of the grid. Enter a number between 1 and 256. Advice numbers : 36, 62, 126, 256",
+				        order = 1,
+				        width = "full",
+				        get = function()
+				            return tostring(UnitFramesImprovedDB.GridSize)
+				        end,
+				        set = function(_, value)
+				            value = tonumber(value)
+							if value and value >= 1 and value <= 256 then
+				                UnitFramesImprovedDB.GridSize = value
+				                if UnitFramesImprovedDB.EnableGrid then
+				                    UnitFramesImproved:CreateGrid(value)
+				                end
+				            end
+				        end,
+				        validate = function(_, value)
+				            local num = tonumber(value)
+				            if num and num >= 1 and num <= 256 then
+				                return true
+				            else
+				                return "Please enter a number between 1 and 256."
+				            end
+				        end,
+				        disabled = function() return not UnitFramesImprovedDB.EnableGrid end,
+				    },
+				GridBorderColor = {
+				        type = "color",
+				        name = "Grid Color",
+				        desc = "Set the color of the Grid. Change the numbers or reload to set the color",
+				        order = 3,
+				        get = function()
+				            local color = UnitFramesImprovedDB.GridBorderColor or { r = 0, g = 0, b = 0, a = 1 } -- Default black color
+				            return color.r, color.g, color.b, color.a
+				        end,
+				        set = function(_, r, g, b, a)
+				            UnitFramesImprovedDB.GridBorderColor = { r = r, g = g, b = b, a = a }
+				    		-- print("GridBorderColor set to:", r, g, b, a) -- Debugging line
+				        end,
+ 				       hasAlpha = true,
+				        disabled = function()
+				            return not UnitFramesImprovedDB.EnableGrid
+				        end,
+				    },
+				},
+			  },	
 	},
 }
 
@@ -311,28 +429,19 @@ RegisterOptions()
 
 -- Event listener to make sure we enable the addon at the right time
 function UnitFramesImproved:PLAYER_ENTERING_WORLD()
-	if not UnitFramesImprovedDB.playerframe then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.targetframe then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.focusframe then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.buffframe then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.partyframe then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.largeBuffSize then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
-    end
-	if not UnitFramesImprovedDB.smallBuffSize then
+	if not UnitFramesImprovedDB.playerframe
+	or not UnitFramesImprovedDB.targetframe
+	or not UnitFramesImprovedDB.focusframe
+	or not UnitFramesImprovedDB.buffframe
+	or not UnitFramesImprovedDB.partyframe
+	or not UnitFramesImprovedDB.largeBuffSize
+	or not UnitFramesImprovedDB.smallBuffSize
+	or not UnitFramesImprovedDB.targetdebuffsperrow
+	then
         UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
     end
 	
+
 	-- Set some default settings
 	if (characterSettings == nil) then
 		UnitFramesImproved_LoadDefaultSettings();
@@ -385,6 +494,8 @@ ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
 
 self:ReloadVisual("largeBuffSize")
 self:ReloadVisual("smallBuffSize")
+self:ReloadVisual("targetdebuffsperrow")
+UnitFramesImprovedDB.EnableGrid = false
 end
 
 function UnitFramesImproved:ReloadVisual(arg)
@@ -392,8 +503,670 @@ if (arg == "largeBuffSize") then
 		LARGE_BUFF_SIZE = UnitFramesImprovedDB.largeBuffSize
 elseif (arg == "smallBuffSize") then
 		SMALL_BUFF_SIZE = UnitFramesImprovedDB.smallBuffSize
+elseif (arg == "targetdebuffsperrow") then
+
+		TARGET_DEBUFFS_PER_ROW = UnitFramesImprovedDB.targetdebuffsperrow
 end
 end
+
+
+
+-- Create a table to store indicators for all frames
+local moveIndicators = {}
+
+-- Function to create a square indicator
+-- Function to create a square indicator with a customizable size
+local function CreateMoveIndicator(parentFrame, size)
+    size = size or 16  -- Default size is 16 if not specified
+    local indicator = CreateFrame("Frame", nil, parentFrame)
+    indicator:SetFrameStrata("BACKGROUND")
+    indicator:SetAllPoints(parentFrame)
+    indicator:SetBackdrop({
+        bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+        tile = true,
+        tileSize = size,  -- Set the size of the indicator
+        insets = { left = size / 4, right = size / 4, top = size / 4, bottom = size / 4 }
+    })
+    indicator:SetBackdropColor(0, 1, 1, 0.5)
+    indicator:Hide()
+    return indicator
+end
+
+
+-- Function to show/hide indicators based on Alt key state
+local function UpdateMoveIndicators()
+    local altKeyDown = IsAltKeyDown()
+    for _, indicator in ipairs(moveIndicators) do
+        if altKeyDown and UnitFramesImprovedDB.enablemoveunitframe then
+            indicator:Show()
+        else
+            indicator:Hide()
+        end
+    end
+end
+
+local function ConditionallyAddFrame(frames, frame)
+if frame then
+	frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:RegisterForDrag("LeftButton")
+
+    local indicator = CreateMoveIndicator(frame)
+    table.insert(moveIndicators, indicator)
+
+    frame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    frame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+		end
+		end)
+	end
+end
+
+-- Attach drag functionality and create indicators for frames
+local framesToMakeMovable = {PlayerFrame, TargetFrame, MinimapCluster, PartyMemberFrame1, PartyMemberFrame2, PartyMemberFrame3, PartyMemberFrame4,
+							PetFrame, TotemFrame,
+							TargetofTargetFrame, CastingBarFrame, MirrorTimer1, AlwaysUpFrame1, WorldStateAlwaysUpFrame
+} -- Add more frames as needed
+
+local durabilityFrame = DurabilityFrame
+if durabilityFrame then
+	local frameDurability = CreateFrame("Frame", "DragFrameDurability", UIParent)
+    durabilityFrame:EnableMouse(true)
+    durabilityFrame:SetMovable(true)
+    durabilityFrame:RegisterForDrag("LeftButton")
+	DurabilityFrame:SetScale(1.3)
+    -- Create a larger square indicator for durabilityFrame
+    local indicator = CreateMoveIndicator(durabilityFrame, 270)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    durabilityFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    durabilityFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	DurabilityFrame.SetPoint = function() end
+end
+
+local shapeshiftBarFrame = ShapeshiftBarFrame
+if shapeshiftBarFrame then
+    shapeshiftBarFrame:EnableMouse(true)
+    shapeshiftBarFrame:SetMovable(true)
+    shapeshiftBarFrame:RegisterForDrag("LeftButton")
+
+    -- Create a larger square indicator for ShapeshiftBarFrame
+    local indicator = CreateMoveIndicator(shapeshiftBarFrame, 200)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    shapeshiftBarFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    shapeshiftBarFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+end
+
+local petActionBarFrame = PetActionBarFrame
+if petActionBarFrame then
+	-- Set the X and Y coordinates for the PetActionBarFrame
+    local petActionBarXPos = 480  -- Replace with your desired X coordinate
+    local petActionBarYPos = 140  -- Replace with your desired Y coordinate
+
+	local framePetActionBarFrame = CreateFrame("Frame", "DragFramePetActionBarFrame", UIParent)
+    petActionBarFrame:EnableMouse(true)
+    petActionBarFrame:SetMovable(true)
+    petActionBarFrame:RegisterForDrag("LeftButton")
+
+	PetActionBarFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", petActionBarXPos, petActionBarYPos);
+
+
+
+    -- Create a larger square indicator for petActionBarFrame
+    local indicator = CreateMoveIndicator(petActionBarFrame, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    petActionBarFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    petActionBarFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	petActionBarFrame.SetPoint = function() end
+end
+
+local questwatchFrame = QuestWatchFrame
+if questwatchFrame then
+	local frameQuestWatchFrame = CreateFrame("Frame", "DragFrameQuestWatchFrame", UIParent)
+    questwatchFrame:EnableMouse(true)
+    questwatchFrame:SetMovable(true)
+    questwatchFrame:RegisterForDrag("LeftButton")
+
+    -- Create a larger square indicator for questwatchFrame
+    local indicator = CreateMoveIndicator(questwatchFrame, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    questwatchFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    questwatchFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	questwatchFrame.SetPoint = function() end
+end
+
+local buffFrame = BuffFrame
+if buffFrame then
+	local frameBuffFrame = CreateFrame("Frame", "DragFrameBuffFrame", UIParent)
+    buffFrame:EnableMouse(true)
+    buffFrame:SetMovable(true)
+    buffFrame:RegisterForDrag("LeftButton")
+	BuffFrame:SetPoint("TOPRIGHT", "TemporaryEnchantFrame", "TOPLEFT", -5, 0);
+	
+	
+    -- Create a larger square indicator for buffFrame
+    local indicator = CreateMoveIndicator(buffFrame, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    buffFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    buffFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	buffFrame.SetPoint = function() end
+end
+
+local temporaryEnchantFrame = TemporaryEnchantFrame
+if temporaryEnchantFrame then
+	local frameTemporaryEnchantFrame = CreateFrame("Frame", "DragFrameTemporaryEnchantFrame", UIParent)
+    temporaryEnchantFrame:EnableMouse(true)
+    temporaryEnchantFrame:SetMovable(true)
+    temporaryEnchantFrame:RegisterForDrag("LeftButton")
+
+    -- Create a larger square indicator for temporaryEnchantFrame
+    local indicator = CreateMoveIndicator(temporaryEnchantFrame, 250)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    temporaryEnchantFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    temporaryEnchantFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	temporaryEnchantFrame.SetPoint = function() end
+end
+
+function BuffButton_UpdateAnchors(buttonName, index, filter)
+    local rows = ceil(BUFF_ACTUAL_DISPLAY / BUFFS_PER_ROW);
+    local buff = getglobal(buttonName .. index);
+    local buffHeight = TempEnchant1:GetHeight();
+
+    if (filter == "HELPFUL") then
+        if ((index > 1) and (mod(index, BUFFS_PER_ROW) == 1)) then
+            -- New row
+            if (index == BUFFS_PER_ROW + 1) then
+                buff:SetPoint("TOP", TempEnchant1, "BOTTOM", 0, -BUFF_ROW_SPACING);
+            else
+                buff:SetPoint("TOP", getglobal(buttonName .. (index - BUFFS_PER_ROW)), "BOTTOM", 0, -BUFF_ROW_SPACING);
+            end
+        elseif (index == 1) then
+            buff:SetPoint("TOPRIGHT", BuffFrame, "TOPRIGHT", 0, 0);
+        else
+            buff:SetPoint("RIGHT", getglobal(buttonName .. (index - 1)), "LEFT", -5, 0);
+        end
+    else
+        -- Position debuffs
+        if (filter == "HARMFUL") then
+            -- Modify the debuff anchoring here
+            local customDebuffFrame = getglobal("CustomDebuffFrame") -- Change to your custom debuff frame name
+            local debuffSpacing = 5  -- Adjust the spacing between debuffs
+
+            if (customDebuffFrame and customDebuffFrame:IsShown()) then
+                -- If your custom debuff frame exists and is shown
+                local debuffIndex = index - BUFF_MAX_DISPLAY
+                local numRows = ceil(DEBUFF_ACTUAL_DISPLAY / BUFFS_PER_ROW)
+
+                local row = ceil(debuffIndex / BUFFS_PER_ROW)
+                local col = debuffIndex % BUFFS_PER_ROW
+                if (col == 0) then
+                    col = BUFFS_PER_ROW
+                end
+
+                local xOffset = (col - 1) * (buff:GetWidth() + debuffSpacing)
+                local yOffset = -((row - 1) * (buff:GetHeight() + debuffSpacing))
+                buff:SetPoint("TOPLEFT", customDebuffFrame, "TOPLEFT", xOffset, yOffset)
+            else
+                -- Fall back to the original anchoring if your custom debuff frame is not shown
+                if ((index > 1) and (mod(index, BUFFS_PER_ROW) == 1)) then
+                    -- New row
+                    buff:SetPoint("TOP", getglobal(buttonName .. (index - BUFFS_PER_ROW)), "BOTTOM", 0, -BUFF_ROW_SPACING)
+                elseif (index == 1) then
+                    if (rows < 2) then
+                        buff:SetPoint("TOPRIGHT", BuffButton1, "BOTTOMRIGHT", 0, -1 * ((2 * BUFF_ROW_SPACING) + buffHeight))
+                    else
+                        buff:SetPoint("TOPRIGHT", BuffButton1, "BOTTOMRIGHT", 0, -rows * (BUFF_ROW_SPACING + buffHeight))
+                    end
+                else
+                    buff:SetPoint("RIGHT", getglobal(buttonName .. (index - 1)), "LEFT", -5, 0)
+                end
+            end
+        end
+    end
+end
+
+
+
+
+-- Loop through all party member pet frames
+for i = 1, 4 do
+    local partypetFrame = _G["PartyMemberFrame" .. i .. "PetFrame"]
+    if partypetFrame then
+		local partyframe = "PartyMemberFrame"..i;
+        local frameName = "DragFramePartyMemberFrame" .. i .. "PetFrame"
+        local framePartyMemberPet = CreateFrame("Frame", frameName, UIParent)
+        
+        partypetFrame:EnableMouse(true)
+        partypetFrame:SetMovable(true)
+        partypetFrame:RegisterForDrag("LeftButton")
+		if ( SHOW_PARTY_PETS == "1" ) then
+		partypetFrame:SetPoint("TOPLEFT", partyframe, "TOPLEFT", 23, -43);
+	else
+		partypetFrame:SetPoint("TOPLEFT", partyframe, "TOPLEFT", 23, -27);
+	end
+        -- Create a larger square indicator for partypetFrame
+        local indicator = CreateMoveIndicator(partypetFrame, nil)  -- Set a larger size (e.g., 32)
+        table.insert(moveIndicators, indicator)
+
+        partypetFrame:SetScript("OnDragStart", function(self)
+            if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+                self.isMoving = true
+                self:StartMoving()
+            end
+        end)
+
+        partypetFrame:SetScript("OnDragStop", function(self)
+            if self.isMoving then
+                self.isMoving = false
+                self:StopMovingOrSizing()
+                UpdateMoveIndicators()
+            end
+        end)
+        partypetFrame.SetPoint = function() end
+    end
+end
+
+local targetFrameSpellBar = TargetFrameSpellBar
+if TargetFrameSpellBar then
+	local frameTargetFrameSpellBar = CreateFrame("Frame", "DragFrameTargetFrameSpellBar", UIParent)
+    TargetFrameSpellBar:EnableMouse(true)
+    TargetFrameSpellBar:SetMovable(true)
+    TargetFrameSpellBar:RegisterForDrag("LeftButton")
+	TargetFrameSpellBar:SetPoint("BOTTOM", "TargetFrame", "BOTTOM", -15, -25);
+    -- Create a larger square indicator for TargetFrameSpellBar
+    local indicator = CreateMoveIndicator(TargetFrameSpellBar, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    TargetFrameSpellBar:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    TargetFrameSpellBar:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	TargetFrameSpellBar.SetPoint = function() end
+end
+
+local targetofFocusFrame = TargetofFocusFrame
+if targetofFocusFrame then
+	local frametargetofFocusFrame = CreateFrame("Frame", "DragFrameTargetofFocusFrame", UIParent)
+    targetofFocusFrame:EnableMouse(true)
+    targetofFocusFrame:SetMovable(true)
+    targetofFocusFrame:RegisterForDrag("LeftButton")
+
+    -- Create a larger square indicator for targetofFocusFrame
+    local indicator = CreateMoveIndicator(targetofFocusFrame, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    targetofFocusFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    targetofFocusFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	targetofFocusFrame.SetPoint = function() end
+end
+
+
+
+if NUM_EXTENDED_UI_FRAMES then
+local lastBar = nil
+for i = 1, NUM_EXTENDED_UI_FRAMES do
+local worldStateCaptureBar1 = _G["WorldStateCaptureBar"..i]
+
+	local frameWorldStateCaptureBar1 = CreateFrame("Frame", "DragFrameWorldStateCaptureBar1", UIParent)
+    worldStateCaptureBar1:EnableMouse(true)
+    worldStateCaptureBar1:SetMovable(true)
+    worldStateCaptureBar1:RegisterForDrag("LeftButton")
+	local captureBar = getglobal("WorldStateCaptureBar"..i)
+				if captureBar and captureBar:IsVisible() then
+				
+					captureBar:ClearAllPoints()
+					if i==1 then
+						captureBar:SetPoint("CENTER", Minimap, "CENTER", -90, -110)
+					else
+						captureBar:SetPoint("CENTER", lastBar, "CENTER", -90, -110)
+					end
+					lastBar = captureBar
+				end
+    -- Create a larger square indicator for worldStateCaptureBar1
+    local indicator = CreateMoveIndicator(worldStateCaptureBar1, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    worldStateCaptureBar1:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    worldStateCaptureBar1:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	worldStateCaptureBar1.SetPoint = function() end
+end
+
+end
+
+-- Create a single draggable frame
+local dragFrame = CreateFrame("Frame", "DragFrameWorldStateCaptureBars", UIParent)
+dragFrame:SetClampedToScreen(true)
+dragFrame:EnableMouse(true)
+dragFrame:SetMovable(true)
+dragFrame:RegisterForDrag("LeftButton")
+dragFrame:SetPoint("CENTER", Minimap, "CENTER", -90, -110)
+dragFrame:SetSize(200, 200) -- Adjust the size as needed
+
+dragFrame:SetScript("OnDragStart", function(self)
+    if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+        self.isMoving = true
+        self:StartMoving()
+    end
+end)
+
+dragFrame:SetScript("OnDragStop", function(self)
+    if self.isMoving then
+        self.isMoving = false
+        self:StopMovingOrSizing()
+        UpdateMoveIndicators()
+    end
+end)
+
+--[[for i = 1, NUM_EXTENDED_UI_FRAMES do
+local cb = _G["WorldStateCaptureBar"..i]
+hooksecurefunc(cb, "SetPoint", function(self, _, parent)
+    if parent and (parent == "MinimapCluster" or parent == _G["MinimapCluster"]) then
+        cb:ClearAllPoints()
+        cb:SetPoint("CENTER", Minimap, "CENTER", -790, -110)
+    end
+end)
+end]]
+
+local function captureupdate()
+    local nexty = 0
+    for i = 1, NUM_EXTENDED_UI_FRAMES do
+        local cb = _G["WorldStateCaptureBar"..i]
+        if cb and cb:IsShown() then
+            cb:ClearAllPoints()
+            cb:SetPoint("CENTER", dragFrame, "CENTER")
+            nexty = nexty + cb:GetHeight()
+        end
+    end
+end
+
+hooksecurefunc("WorldStateAlwaysUpFrame_Update", captureupdate)
+
+-- Now, conditionally add each capture bar to the draggable frame
+for i = 1, NUM_EXTENDED_UI_FRAMES do
+    local cb = _G["WorldStateCaptureBar"..i]
+    ConditionallyAddFrame(cb)
+end
+	
+local possessBarFrame = PossessBarFrame
+if possessBarFrame ~= nil then
+	local framePossessBarFrame = CreateFrame("Frame", "DragFramePossessBarFrame", UIParent)
+    possessBarFrame:EnableMouse(true)
+    possessBarFrame:SetMovable(true)
+    possessBarFrame:RegisterForDrag("LeftButton")
+	possessBarFrame:SetPoint("LEFT", "MultiBarBottomLeft", "LEFT", -0, -975)
+    -- Create a larger square indicator for possessBarFrame
+    local indicator = CreateMoveIndicator(possessBarFrame, 270)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    possessBarFrame:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    possessBarFrame:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	
+end
+
+--[[local targetFrameBuffs = TargetFrameBuffs
+if targetFrameBuffs then
+	local frameTargetFrameBuffs = CreateFrame("Frame", "DragFrameTargetFrameBuffs", UIParent)
+    targetFrameBuffs:EnableMouse(true)
+    targetFrameBuffs:SetMovable(true)
+    targetFrameBuffs:RegisterForDrag("LeftButton")
+
+    -- Create a larger square indicator for targetFrameBuffs
+    local indicator = CreateMoveIndicator(targetFrameBuffs, nil)  -- Set a larger size (e.g., 32)
+    table.insert(moveIndicators, indicator)
+
+    targetFrameBuffs:SetScript("OnDragStart", function(self)
+        if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+            self.isMoving = true
+            self:StartMoving()
+        end
+    end)
+
+    targetFrameBuffs:SetScript("OnDragStop", function(self)
+        if self.isMoving then
+            self.isMoving = false
+            self:StopMovingOrSizing()
+            UpdateMoveIndicators()
+        end
+    end)
+	
+end]]
+
+
+for _, frame in ipairs(framesToMakeMovable) do
+    ConditionallyAddFrame(framesToMakeMovable, frame)
+end	
+	
+
+-- Listen for Alt key press/release to update indicators
+local altKeyFrame = CreateFrame("Frame")
+altKeyFrame:SetScript("OnUpdate", function()
+	if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+		Minimap:EnableMouse(false)
+		for i = 1, 6 do
+            local shapeshiftButton = _G["PetActionButton" .. i]
+            if shapeshiftButton then
+                shapeshiftButton:EnableMouse(false)
+            end
+        end
+		for i = 1, 10 do
+            local petActionButton = _G["PetActionButton" .. i]
+            if petActionButton then
+                petActionButton:EnableMouse(false)
+            end
+        end
+		for i = 1, 32 do
+            local buffButton = _G["BuffButton" .. i]
+            if buffButton then
+                buffButton:EnableMouse(false)
+            end
+        end
+		for i = 1, 2 do
+            local TempEnchant = _G["TempEnchant" .. i]
+            if TempEnchant then
+                TempEnchant:EnableMouse(false)
+            end
+        end
+		for i = 1, 4 do
+            local totemFrameTotem = _G["TotemFrameTotem" .. i]
+            if totemFrameTotem then
+                totemFrameTotem:EnableMouse(false)
+            end
+		end
+		for i = 1, 10 do
+            local possessButton = _G["PossessButton" .. i]
+            if possessButton then
+                possessButton:EnableMouse(false)
+            end
+		end
+		for i = 1, 10 do
+            local dragFrameWorldStateCaptureBars = DragFrameWorldStateCaptureBars
+            if dragFrameWorldStateCaptureBars then
+                dragFrameWorldStateCaptureBars:EnableMouse(true)
+            end
+		end
+	else 
+	
+		Minimap:EnableMouse(true)
+		for i = 1, 6 do
+            local shapeshiftButton = _G["PetActionButton" .. i]
+            if shapeshiftButton then
+                shapeshiftButton:EnableMouse(true)
+            end
+        end
+		for i = 1, 10 do
+            local petActionButton = _G["PetActionButton" .. i]
+            if petActionButton then
+                petActionButton:EnableMouse(true)
+            end
+        end
+		for i = 1, 32 do
+            local buffButton = _G["BuffButton" .. i]
+            if buffButton then
+                buffButton:EnableMouse(true)
+            end
+        end
+		for i = 1, 2 do
+            local TempEnchant = _G["TempEnchant" .. i]
+            if TempEnchant then
+                TempEnchant:EnableMouse(true)
+            end
+        end
+		for i = 1, 4 do
+            local totemFrameTotem = _G["TotemFrameTotem" .. i]
+            if totemFrameTotem then
+                totemFrameTotem:EnableMouse(true)
+            end
+		end
+		for i = 1, 10 do
+            local possessButton = _G["PossessButton" .. i]
+            if possessButton then
+                possessButton:EnableMouse(true)
+            end
+		end
+		for i = 1, 10 do
+            local dragFrameWorldStateCaptureBars = DragFrameWorldStateCaptureBars
+            if dragFrameWorldStateCaptureBars then
+                dragFrameWorldStateCaptureBars:EnableMouse(false)
+            end
+		end
+	end
+	UpdateMoveIndicators()
+end)
+
+
+
 -- Event listener to make sure we've loaded our settings and thta we apply them
 function UnitFramesImproved:VARIABLES_LOADED()
 	dout("UnitFramesImproved settings loaded!");
@@ -716,12 +1489,16 @@ SlashCmdList["UNITFRAMESIMPROVED"] = function(msg, editBox)
 		end
 	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "gui") then
 		InterfaceOptionsFrame_OpenToFrame(ADDON_NAME)
+	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "align") then
+        local spacing = tonumber(tokens[2]) or -1
+       UnitFramesImproved:CreateGridcmd(spacing) -- Call the grid creation function
 	else
 		dout("Valid commands for UnitFramesImproved are:")
 		dout("    help    (shows this message)");
 		dout("    scale # (scales the player frames)");
 		dout("    reset   (resets the scale of the player frames)");
 		dout("    gui   (Open the interface option panel)");
+		dout("    align #  (Create a grid with specified spacing)");
 		dout("");
 	end
 end
@@ -755,6 +1532,145 @@ StaticPopupDialogs["LAYOUT_RESETDEFAULT"] = {
 	whileDead = true,
 	hideOnEscape = true
 }
+
+
+-- Define the grid creation function
+function UnitFramesImproved:CreateGrid(spacing)
+if UnitFramesImprovedDB.EnableGrid then
+local color = UnitFramesImprovedDB.GridBorderColor or { r = 0, g = 0, b = 0, a = 1 } -- Default black color
+-- print("Grid line color:", color.r, color.g, color.b, color.a)
+	if grid then
+            local regions = { grid:GetRegions() }
+            for _, region in pairs(regions) do
+                region:Hide()
+            end
+       else
+            grid = CreateFrame("Frame", "grid", UIParent)
+            grid:SetAllPoints(UIParent)
+       end
+    -- Your grid creation logic here using the 'spacing' variable
+	CreateFrame("Frame", "grid", UIParent)
+	grid:SetAllPoints(UIParent)
+    regions = {grid:GetRegions()}
+    for i,region in pairs(regions) do
+        region:Hide()
+        region = nil
+    end
+    if (spacing or -1) > 3 then
+        local x = 0
+        repeat
+            local lastXLine = grid:CreateTexture(nil, "BORDER")
+            lastXLine:SetWidth(1)
+            lastXLine:SetHeight(grid:GetHeight())
+            lastXLine:SetPoint("CENTER", x*spacing, 0)
+            if x == 0 then
+                lastXLine:SetTexture(1,0,0)
+                lastXLine:SetDrawLayer("ARTWORK")
+            else
+                lastXLine:SetTexture(color.r, color.g, color.b, color.a)
+            end
+            x = x + 1
+        until(x*spacing > (grid:GetWidth() /2))
+        x = 1
+        repeat
+            local lastXLine = grid:CreateTexture(nil, "BORDER")
+            lastXLine:SetWidth(1)
+            lastXLine:SetHeight(grid:GetHeight())
+            lastXLine:SetPoint("CENTER", -x*spacing, 0)
+            lastXLine:SetTexture(color.r, color.g, color.b, color.a)
+            x = x + 1
+        until(x*spacing > (grid:GetWidth() /2))
+        local y = 0
+        repeat
+            local lastYLine = grid:CreateTexture(nil, "BORDER")
+            lastYLine:SetHeight(1)
+            lastYLine:SetWidth(grid:GetWidth())
+            lastYLine:SetPoint("CENTER", 0, y*spacing)
+            if y == 0 then
+                lastYLine:SetTexture(1,0,0)
+                lastYLine:SetDrawLayer("ARTWORK")
+            else            
+                lastYLine:SetTexture(color.r, color.g, color.b, color.a)
+            end
+            y = y + 1
+        until(y*spacing > (grid:GetHeight() / 2))
+        y = 1
+        repeat
+            local lastYLine = grid:CreateTexture(nil, "BORDER")
+            lastYLine:SetHeight(1)
+            lastYLine:SetWidth(grid:GetWidth())
+            lastYLine:SetPoint("CENTER", 0, -y*spacing)
+			lastYLine:SetTexture(color.r, color.g, color.b, color.a)
+            y = y + 1
+        until(y*spacing > (grid:GetHeight() / 2))
+       
+    elseif grid then
+        grid:Hide()
+    end
+end
+end
+
+function UnitFramesImproved:CreateGridcmd(spacing)
+    -- Your grid creation logic here using the 'spacing' variable
+	CreateFrame("Frame", "grid2", UIParent)
+	grid2:SetAllPoints(UIParent)
+    regions = {grid2:GetRegions()}
+    for i,region in pairs(regions) do
+        region:Hide()
+        region = nil
+    end
+    if (spacing or -1) > 3 then
+        local x = 0
+        repeat
+            local lastXLine = grid2:CreateTexture(nil, "BORDER")
+            lastXLine:SetWidth(1)
+            lastXLine:SetHeight(grid2:GetHeight())
+            lastXLine:SetPoint("CENTER", x*spacing, 0)
+            if x == 0 then
+                lastXLine:SetTexture(1,0,0)
+                lastXLine:SetDrawLayer("ARTWORK")
+            else
+                lastXLine:SetTexture(0,0,0)
+            end
+            x = x + 1
+        until(x*spacing > (grid2:GetWidth() /2))
+        x = 1
+        repeat
+            local lastXLine = grid2:CreateTexture(nil, "BORDER")
+            lastXLine:SetWidth(1)
+            lastXLine:SetHeight(grid2:GetHeight())
+            lastXLine:SetPoint("CENTER", -x*spacing, 0)
+            lastXLine:SetTexture(0,0,0)
+            x = x + 1
+        until(x*spacing > (grid2:GetWidth() /2))
+        local y = 0
+        repeat
+            local lastYLine = grid2:CreateTexture(nil, "BORDER")
+            lastYLine:SetHeight(1)
+            lastYLine:SetWidth(grid2:GetWidth())
+            lastYLine:SetPoint("CENTER", 0, y*spacing)
+            if y == 0 then
+                lastYLine:SetTexture(1,0,0)
+                lastYLine:SetDrawLayer("ARTWORK")
+            else            
+                lastYLine:SetTexture(0,0,0)
+            end
+            y = y + 1
+        until(y*spacing > (grid2:GetHeight() / 2))
+        y = 1
+        repeat
+            local lastYLine = grid2:CreateTexture(nil, "BORDER")
+            lastYLine:SetHeight(1)
+            lastYLine:SetWidth(grid2:GetWidth())
+            lastYLine:SetPoint("CENTER", 0, -y*spacing)
+			lastYLine:SetTexture(0,0,0)
+            y = y + 1
+        until(y*spacing > (grid2:GetHeight() / 2))
+        
+	
+	end
+end
+
 
 function UnitFramesImproved_TextStatusBar_UpdateTextStringWithValues(textStatusBar)
 	if ( not textStatusBar ) then
