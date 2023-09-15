@@ -1,6 +1,7 @@
 -- Credits to stassart on curse.com for suggesting to use InCombatLockdown() checks in the code
 
 local ADDON_NAME = "UnitFramesImproved"
+
 -- Debug function. Adds message to the chatbox (only visible to the loacl player)
 function dout(msg)
 	DEFAULT_CHAT_FRAME:AddMessage(msg);
@@ -42,10 +43,11 @@ local defaultUnitFramesImprovedDB = {
 	partyframe = 1.6,
 	largeBuffSize = LARGE_BUFF_SIZE,
 	smallBuffSize = SMALL_BUFF_SIZE,
-	targetdebuffsperrow = TARGET_DEBUFFS_PER_ROW,
+	targetbuffsperrow = 6,
 	EnableGrid = false,
 	GridSize = 30,
 	enablemoveunitframe = false,
+	targetbuffplacement = 1,
 }
 
 
@@ -289,22 +291,49 @@ local options = {
                 UnitFramesImprovedDB.smallBuffSize = value
             end
 			},
-		targetdebuffsperrow = {
+		targetbuffsperrow = {
 				order = 8,
-				name = "Target debuffs per row",
+				name = "Target buffs per row",
 				type = "range",
-				desc = "Set the amount of debuffs per lines",
-				min = 2, max = 8, step = 1,
+				desc = "Set the amount of buffs per lines",
+				min = 2, max = 15, step = 1,
 				get = function()
-				if UnitFramesImprovedDB.targetdebuffsperrow == nil then
-				UnitFramesImprovedDB.targetdebuffsperrow = defaultUnitFramesImprovedDB.targetdebuffsperrow 
+				if UnitFramesImprovedDB.targetbuffsperrow == nil then
+				UnitFramesImprovedDB.targetbuffsperrow = defaultUnitFramesImprovedDB.targetbuffsperrow 
 				end
-                return UnitFramesImprovedDB.targetdebuffsperrow
+                return UnitFramesImprovedDB.targetbuffsperrow
             end,
             set = function(info, value)
-                UnitFramesImprovedDB.targetdebuffsperrow = value
+                UnitFramesImprovedDB.targetbuffsperrow = value
             end
 			},
+			
+		targetbuffplacement = {
+    type = "select",
+    name = "Target Buff Placement",
+    desc = "Set the placement of the Target Buffs and Debuffs",
+    get = function()
+		if UnitFramesImprovedDB.targetbuffplacement == nil then
+            UnitFramesImprovedDB.targetbuffplacement = defaultUnitFramesImprovedDB.targetbuffplacement -- Set the default index for the harmful spells
+        end
+        return UnitFramesImprovedDB.targetbuffplacement
+    end,
+    set = function(info, value)
+        UnitFramesImprovedDB.targetbuffplacement = value;
+    end,
+    values = {
+    -- below
+	"|TInterface\\CHATFRAME\\UI-ChatIcon-ScrollDown-Up:15:15|t All Below the Target Frame", 
+	-- TopBuffOnTop
+	"|TInterface\\CHATFRAME\\UI-ChatIcon-ScrollUp-Up:15:15|t All Above with Debuffs at Top and Buffs at Bottom", 
+	-- TopDebuffOnTop
+	"|TInterface\\CHATFRAME\\UI-ChatIcon-ScrollUp-Disabled:15:15|t All Above with Buffs at Top and Debuffs at Bottom",
+	-- BuffOnTop and DebuffOnBot
+	"|TInterface\\CHATFRAME\\UI-ChatIcon-Minimize-Up:15:15|t Buffs Above and Debuffs Below the Target Frame",
+	},
+    order = 9,
+    width = "full",            
+ },
 		SaveAndReload = {
     type = "execute",
     name = "Save & Reload",
@@ -417,6 +446,379 @@ local options = {
 	},
 }
 
+-- Target Buff Blizzard position
+function BuffSizer_TargetBuffDebuffBelow()
+function TargetFrame_UpdateBuffAnchor(buffName, index, numFirstRowBuffs, numDebuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+	
+	if ( TargetofTargetFrame:IsShown() ) then
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	else
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	end
+	
+	if ( index == 1 ) then
+		if ( UnitIsFriend("player", "target") ) then
+			buff:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", TargetFrame.buffStartX, TargetFrame.buffStartY);
+		else
+			if ( numDebuffs > 0 ) then
+				buff:SetPoint("TOPLEFT", TargetFrameDebuffs, "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			else
+				buff:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", TargetFrame.buffStartX, TargetFrame.buffStartY);
+			end
+		end
+		TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+		TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (numFirstRowBuffs+1) ) then
+		buff:SetPoint("TOPLEFT", getglobal(buffName..1), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+		TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (2*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (3*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(2*numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (4*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(3*numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (5*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(4*numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (6*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(5*numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (7*numFirstRowBuffs+1) ) then
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(6*numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+end
+end
+
+-- Target Buff Top with Buff at bottom and Debuff at top
+function BuffSizer_TargetAllTopBuffBotDebuffTop()
+function TargetFrame_UpdateBuffAnchor(buffName, index, numFirstRowBuffs, numDebuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+	
+	if ( TargetofTargetFrame:IsShown() ) then
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	else
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	end
+	
+	if ( index == 1 ) then
+		if ( UnitIsFriend("player", "target") ) then
+				buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+			else
+				--if ( numDebuffs > 0 ) then
+					--buff:SetPoint("BOTTOMLEFT", TargetFrameDebuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+				--else
+					buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+				--end
+			end
+		TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..1), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (2*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (3*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(2*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (4*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(3*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (5*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(4*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (6*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(5*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (7*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(6*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+end
+
+	-- Update debuff positioning/size
+	function TargetFrame_UpdateDebuffAnchor(buffName, index, numFirstRowBuffs, numBuffs, buffSize, offset, ...)
+		local buff = getglobal(buffName..index);
+		
+		if ( index == 1 ) then
+			if ( UnitIsFriend("player", "target") and (numBuffs > 0) ) then
+				buff:SetPoint("BOTTOMLEFT", TargetFrameBuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+			else
+				if ( numBuffs > 0 ) then
+					buff:SetPoint("BOTTOMLEFT", TargetFrameBuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+				else
+					buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -20);
+				end
+			end
+			TargetFrameDebuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..1), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameDebuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( (index > numFirstRowBuffs) and (mod(index+(TARGET_DEBUFFS_PER_ROW-numFirstRowBuffs), TARGET_DEBUFFS_PER_ROW) == 1)) then
+			-- Make a new row
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(index-TARGET_DEBUFFS_PER_ROW)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameDebuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		else
+			-- Just anchor to previous
+			buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+		end
+		
+		-- Resize
+		buff:SetWidth(buffSize);
+		buff:SetHeight(buffSize);
+		local debuffFrame = getglobal(buffName..index.."Border");
+		debuffFrame:SetWidth(buffSize+2);
+		debuffFrame:SetHeight(buffSize+2);
+	end
+end
+
+
+-- Target Buff Blizzard position above the target frame
+function BuffSizer_TargetAllTopDebuffBotBuffTop()
+function TargetFrame_UpdateBuffAnchor(buffName, index, numFirstRowBuffs, numDebuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+	
+	if ( TargetofTargetFrame:IsShown() ) then
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	else
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	end
+	
+	if (index == 1) then
+    if (UnitIsFriend("player", "target")) then
+        if (numDebuffs > 0) then
+            buff:SetPoint("BOTTOMLEFT", TargetFrameDebuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+        else
+            buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+        end
+    else
+        if (numDebuffs > 0) then
+            buff:SetPoint("BOTTOMLEFT", TargetFrameDebuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+        else
+            buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+        end
+    end
+    buff:Show()  -- Ensure the buff is visible
+    TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+    TargetFrame.buffRows = TargetFrame.buffRows+1;
+
+	elseif ( index == (numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..1), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (2*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (3*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(2*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (4*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(3*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (5*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(4*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (6*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(5*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (7*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(6*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+end
+
+-- Update debuff positioning/size
+	function TargetFrame_UpdateDebuffAnchor(buffName, index, numFirstRowBuffs, numBuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+
+	if (index == 1) then
+    if (UnitIsFriend("player", "target") and (numBuffs > 0)) then
+        -- Here we modify the debuff positioning to be dynamic based on the presence of buffs
+       buff:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", 5, -TargetFrame.buffSpacing+120);
+    end
+		TargetFrameDebuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (numFirstRowBuffs+1) ) then
+		buff:SetPoint("TOPLEFT", getglobal(buffName..1), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing+120);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( hasTargetofTarget and index == (2*numFirstRowBuffs+1) ) then
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing+120);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( (index > numFirstRowBuffs) and (mod(index+(TARGET_DEBUFFS_PER_ROW-numFirstRowBuffs), TARGET_DEBUFFS_PER_ROW) == 1) and not hasTargetofTarget ) then
+		-- Make a new row
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-TARGET_DEBUFFS_PER_ROW)), "BOTTOMLEFT", 0, -TargetFrame.buffSpacing+120);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+	
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+	local debuffFrame = getglobal(buffName..index.."Border");
+	debuffFrame:SetWidth(buffSize+2);
+	debuffFrame:SetHeight(buffSize+2);
+end
+end
+
+
+-- Target Buff with Debuff at bottom and Buff at top
+function BuffSizer_TargetBuffTopDebuffBot()
+function TargetFrame_UpdateBuffAnchor(buffName, index, numFirstRowBuffs, numDebuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+	
+	if ( TargetofTargetFrame:IsShown() ) then
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	else
+		numFirstRowBuffs = UnitFramesImprovedDB.targetbuffsperrow;
+	end
+	
+	if ( index == 1 ) then
+		if ( UnitIsFriend("player", "target") ) then
+				buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+			else
+				--if ( numDebuffs > 0 ) then
+					--buff:SetPoint("BOTTOMLEFT", TargetFrameDebuffs, "TOPLEFT", 0, TargetFrame.buffSpacing);
+				--else
+					buff:SetPoint("BOTTOMLEFT", TargetFrame, "TOPLEFT", 5, -3);
+				--end
+			end
+		TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..1), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (2*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (3*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(2*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (4*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(3*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (5*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(4*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (6*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(5*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+		elseif ( index == (7*numFirstRowBuffs+1) ) then
+			buff:SetPoint("BOTTOMLEFT", getglobal(buffName..(6*numFirstRowBuffs+1)), "TOPLEFT", 0, TargetFrame.buffSpacing);
+			TargetFrameBuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+			TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+end
+
+	-- Update debuff positioning/size
+	function TargetFrame_UpdateDebuffAnchor(buffName, index, numFirstRowBuffs, numBuffs, buffSize, offset, hasTargetofTarget)
+	local buff = getglobal(buffName..index);
+
+	if ( index == 1 ) then
+		if ( UnitIsFriend("player", "target") and (numBuffs > 0) ) then
+			buff:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", 5, -TargetFrame.buffSpacing+33);
+		else
+			buff:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", TargetFrame.buffStartX, TargetFrame.buffStartY);
+		end
+		TargetFrameDebuffs:SetPoint("TOPLEFT", buff, "TOPLEFT", 0, 0);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( index == (numFirstRowBuffs+1) ) then
+		buff:SetPoint("TOPLEFT", getglobal(buffName..1), "BOTTOMLEFT", 5, -TargetFrame.buffSpacing+33);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( hasTargetofTarget and index == (2*numFirstRowBuffs+1) ) then
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(numFirstRowBuffs+1)), "BOTTOMLEFT", 5, -TargetFrame.buffSpacing+33);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	elseif ( (index > numFirstRowBuffs) and (mod(index+(TARGET_DEBUFFS_PER_ROW-numFirstRowBuffs), TARGET_DEBUFFS_PER_ROW) == 1) and not hasTargetofTarget ) then
+		-- Make a new row
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-TARGET_DEBUFFS_PER_ROW)), "BOTTOMLEFT", 5, -TargetFrame.buffSpacing+33);
+		TargetFrameDebuffs:SetPoint("BOTTOMLEFT", buff, "BOTTOMLEFT", 0, 0);
+		TargetFrame.buffRows = TargetFrame.buffRows+1;
+	else
+		-- Just anchor to previous
+		buff:SetPoint("TOPLEFT", getglobal(buffName..(index-1)), "TOPRIGHT", offset, 0);
+	end
+	
+	-- Resize
+	buff:SetWidth(buffSize);
+	buff:SetHeight(buffSize);
+	local debuffFrame = getglobal(buffName..index.."Border");
+	debuffFrame:SetWidth(buffSize+2);
+	debuffFrame:SetHeight(buffSize+2);
+end
+end
+
+
 -- Function to register options
 local function RegisterOptions()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(ADDON_NAME, options)
@@ -436,7 +838,7 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	or not UnitFramesImprovedDB.partyframe
 	or not UnitFramesImprovedDB.largeBuffSize
 	or not UnitFramesImprovedDB.smallBuffSize
-	or not UnitFramesImprovedDB.targetdebuffsperrow
+	or not UnitFramesImprovedDB.targetbuffsperrow
 	then
         UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
     end
@@ -494,22 +896,32 @@ ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
 
 self:ReloadVisual("largeBuffSize")
 self:ReloadVisual("smallBuffSize")
-self:ReloadVisual("targetdebuffsperrow")
 UnitFramesImprovedDB.EnableGrid = false
+self:CallBuffType()
 end
+
+
 
 function UnitFramesImproved:ReloadVisual(arg)
-if (arg == "largeBuffSize") then
-		LARGE_BUFF_SIZE = UnitFramesImprovedDB.largeBuffSize
-elseif (arg == "smallBuffSize") then
-		SMALL_BUFF_SIZE = UnitFramesImprovedDB.smallBuffSize
-elseif (arg == "targetdebuffsperrow") then
-
-		TARGET_DEBUFFS_PER_ROW = UnitFramesImprovedDB.targetdebuffsperrow
-end
+    if (arg == "largeBuffSize") then
+        LARGE_BUFF_SIZE = UnitFramesImprovedDB.largeBuffSize
+    elseif (arg == "smallBuffSize") then
+        SMALL_BUFF_SIZE = UnitFramesImprovedDB.smallBuffSize
+	end
 end
 
 
+function UnitFramesImproved:CallBuffType()
+	if UnitFramesImprovedDB.targetbuffplacement == 1 then
+		BuffSizer_TargetBuffDebuffBelow()
+	elseif UnitFramesImprovedDB.targetbuffplacement == 2 then
+		BuffSizer_TargetAllTopBuffBotDebuffTop()
+	elseif UnitFramesImprovedDB.targetbuffplacement == 3 then
+		BuffSizer_TargetAllTopDebuffBotBuffTop()
+	elseif UnitFramesImprovedDB.targetbuffplacement == 4 then
+		BuffSizer_TargetBuffTopDebuffBot()
+	end
+end
 
 -- Create a table to store indicators for all frames
 local moveIndicators = {}
@@ -573,8 +985,7 @@ end
 
 -- Attach drag functionality and create indicators for frames
 local framesToMakeMovable = {PlayerFrame, TargetFrame, MinimapCluster, PartyMemberFrame1, PartyMemberFrame2, PartyMemberFrame3, PartyMemberFrame4,
-							PetFrame, TotemFrame,
-							TargetofTargetFrame, CastingBarFrame, MirrorTimer1, AlwaysUpFrame1, WorldStateAlwaysUpFrame
+							PetFrame, TotemFrame, TargetofTargetFrame, CastingBarFrame, MirrorTimer1, AlwaysUpFrame1, WorldStateAlwaysUpFrame
 } -- Add more frames as needed
 
 local durabilityFrame = DurabilityFrame
@@ -753,16 +1164,71 @@ if temporaryEnchantFrame then
 	temporaryEnchantFrame.SetPoint = function() end
 end
 
+
+-- Define a variable to track the state of the custom frame
+local customDebuffFrame2 = nil
+
+-- Function to create or load the custom debuff frame
+local function GetCustomDebuffFrame()
+    if not customDebuffFrame2 then
+	
+	 local buffHeight = TempEnchant1:GetHeight() or 0;
+        customDebuffFrame2 = CreateFrame("Frame", "CustomDebuffFrame2", UIParent)
+        customDebuffFrame2:SetSize(80, 80)
+        customDebuffFrame2:EnableMouse(true)
+        customDebuffFrame2:SetMovable(true)
+        customDebuffFrame2:RegisterForDrag("LeftButton")
+
+        -- Load the saved position from SavedVariables or set a default position
+        local savedPosition = characterSettings.CustomDebuffFrame2Position
+        if savedPosition then
+            customDebuffFrame2:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", savedPosition.x, savedPosition.y)
+        else
+            customDebuffFrame2:SetPoint("TOPRIGHT", TempEnchant1, "BOTTOMRIGHT", 0, -1*((2*BUFF_ROW_SPACING)+buffHeight));
+        end
+		
+        -- Create a larger square indicator for debuffFrame
+        local indicator = CreateMoveIndicator(customDebuffFrame2, nil)  -- Set a larger size (e.g., 32)
+        table.insert(moveIndicators, indicator)
+
+        customDebuffFrame2:SetScript("OnDragStart", function(self)
+            if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
+                self.isMoving = true
+                self:StartMoving()
+            end
+        end)
+
+        customDebuffFrame2:SetScript("OnDragStop", function(self)
+            if self.isMoving then
+                self.isMoving = false
+                self:StopMovingOrSizing()
+                UpdateMoveIndicators()
+
+                -- Save the new position to SavedVariables
+                local x, y = self:GetLeft() * self:GetEffectiveScale(), self:GetTop() * self:GetEffectiveScale()
+                characterSettings.CustomDebuffFrame2Position = { x = x, y = y }
+            end
+        end)
+        customDebuffFrame2.SetPoint = function() end
+    end
+	
+    return customDebuffFrame2
+end
+
+
+
+
+
 function BuffButton_UpdateAnchors(buttonName, index, filter)
     local rows = ceil(BUFF_ACTUAL_DISPLAY / BUFFS_PER_ROW);
     local buff = getglobal(buttonName .. index);
-    local buffHeight = TempEnchant1:GetHeight();
+    local buffHeight = BuffButton1:GetHeight();
 
     if (filter == "HELPFUL") then
         if ((index > 1) and (mod(index, BUFFS_PER_ROW) == 1)) then
             -- New row
             if (index == BUFFS_PER_ROW + 1) then
-                buff:SetPoint("TOP", TempEnchant1, "BOTTOM", 0, -BUFF_ROW_SPACING);
+                buff:SetPoint("TOP", BuffButton1, "BOTTOM", 0, -BUFF_ROW_SPACING);
             else
                 buff:SetPoint("TOP", getglobal(buttonName .. (index - BUFFS_PER_ROW)), "BOTTOM", 0, -BUFF_ROW_SPACING);
             end
@@ -774,6 +1240,7 @@ function BuffButton_UpdateAnchors(buttonName, index, filter)
     else
         -- Position debuffs
         if (filter == "HARMFUL") then
+		local customDebuffFrame2 = GetCustomDebuffFrame()
             -- Modify the debuff anchoring here
             local customDebuffFrame = getglobal("CustomDebuffFrame") -- Change to your custom debuff frame name
             local debuffSpacing = 5  -- Adjust the spacing between debuffs
@@ -799,9 +1266,9 @@ function BuffButton_UpdateAnchors(buttonName, index, filter)
                     buff:SetPoint("TOP", getglobal(buttonName .. (index - BUFFS_PER_ROW)), "BOTTOM", 0, -BUFF_ROW_SPACING)
                 elseif (index == 1) then
                     if (rows < 2) then
-                        buff:SetPoint("TOPRIGHT", BuffButton1, "BOTTOMRIGHT", 0, -1 * ((2 * BUFF_ROW_SPACING) + buffHeight))
+                        buff:SetPoint("CENTER", customDebuffFrame2, "CENTER")
                     else
-                        buff:SetPoint("TOPRIGHT", BuffButton1, "BOTTOMRIGHT", 0, -rows * (BUFF_ROW_SPACING + buffHeight))
+                        buff:SetPoint("CENTER", customDebuffFrame2, "CENTER")
                     end
                 else
                     buff:SetPoint("RIGHT", getglobal(buttonName .. (index - 1)), "LEFT", -5, 0)
@@ -1035,9 +1502,12 @@ if possessBarFrame ~= nil then
 	
 end
 
---[[local targetFrameBuffs = TargetFrameBuffs
+
+
+
+--[[local targetFrameBuffs = TargetFrameToT:GetChildren()]  -- Replace buffFrameName with the actual name you find
 if targetFrameBuffs then
-	local frameTargetFrameBuffs = CreateFrame("Frame", "DragFrameTargetFrameBuffs", UIParent)
+    local frameTargetFrameBuffs = CreateFrame("Frame", "DragFrameTargetFrameBuffs", UIParent)
     targetFrameBuffs:EnableMouse(true)
     targetFrameBuffs:SetMovable(true)
     targetFrameBuffs:RegisterForDrag("LeftButton")
@@ -1060,8 +1530,9 @@ if targetFrameBuffs then
             UpdateMoveIndicators()
         end
     end)
-	
+	targetFrameBuffs.SetPoint = function() end
 end]]
+
 
 
 for _, frame in ipairs(framesToMakeMovable) do
@@ -1116,6 +1587,7 @@ altKeyFrame:SetScript("OnUpdate", function()
                 dragFrameWorldStateCaptureBars:EnableMouse(true)
             end
 		end
+		
 	else 
 	
 		Minimap:EnableMouse(true)
@@ -1161,6 +1633,12 @@ altKeyFrame:SetScript("OnUpdate", function()
                 dragFrameWorldStateCaptureBars:EnableMouse(false)
             end
 		end
+		for i = 1, 32 do
+            local buffButton = _G["DebuffButton" .. i]
+            if buffButton then
+                buffButton:EnableMouse(true)
+            end
+        end
 	end
 	UpdateMoveIndicators()
 end)
@@ -1185,20 +1663,30 @@ function UnitFramesImproved:VARIABLES_LOADED()
 	end
 	
 	UnitFramesImproved_ApplySettings(characterSettings);
+	-- Call the function to apply the custom debuff frame's position
+    local customDebuffFrame2 = GetCustomDebuffFrame()
+    if customDebuffFrame2 then
+        local buffHeight = TempEnchant1:GetHeight();
+        customDebuffFrame2:SetPoint("TOPRIGHT", TempEnchant1, "BOTTOMRIGHT", 0, -1*((2*BUFF_ROW_SPACING)+buffHeight))
+	end
 end
 
 function UnitFramesImproved_ApplySettings(settings)
 	UnitFramesImproved_SetFrameScale(settings["FrameScale"])
+	
 end
 
 function UnitFramesImproved_LoadDefaultSettings()
-	characterSettings = {}
-	characterSettings["FrameScale"] = "1.0";
-	
-	if not TargetFrame:IsUserPlaced() then
-		TargetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPRIGHT", 36, 0);
-	end
+    characterSettings = characterSettings or {}
+    characterSettings["FrameScale"] = "1.0";
+
+    if not TargetFrame:IsUserPlaced() then
+        TargetFrame:SetPoint("TOPLEFT", PlayerFrame, "TOPRIGHT", 36, 0);
+    end
+
+    
 end
+
 
 function EnableUnitFramesImproved()
 	-- Generic status text hook
@@ -1479,6 +1967,8 @@ SlashCmdList["UNITFRAMESIMPROVED"] = function(msg, editBox)
 	local tokens = tokenize(msg);
 	if(table.getn(tokens) > 0 and strlower(tokens[1]) == "reset") then
 		StaticPopup_Show("LAYOUT_RESET");
+	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "resetdebuff") then
+		StaticPopup_Show("LAYOUT_RESETDEBUFF");
 	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "settings") then
 		InterfaceOptionsFrame_Show(UnitFramesImproved.panelSettings);
 	elseif(table.getn(tokens) > 0 and strlower(tokens[1]) == "scale") then
@@ -1497,6 +1987,7 @@ SlashCmdList["UNITFRAMESIMPROVED"] = function(msg, editBox)
 		dout("    help    (shows this message)");
 		dout("    scale # (scales the player frames)");
 		dout("    reset   (resets the scale of the player frames)");
+		dout("    resetdebuff   (resets the debuff frame of the player)");
 		dout("    gui   (Open the interface option panel)");
 		dout("    align #  (Create a grid with specified spacing)");
 		dout("");
@@ -1533,6 +2024,18 @@ StaticPopupDialogs["LAYOUT_RESETDEFAULT"] = {
 	hideOnEscape = true
 }
 
+StaticPopupDialogs["LAYOUT_RESETDEBUFF"] = {
+	text = "The Debuff Frame will be in default position, This will reload your UI.",
+	button1 = "Reset",
+	button2 = "Ignore",
+	OnAccept = function()
+	UnitFramesImproved_ResetCustomDebuffFramePosition()
+		ReloadUI();
+	end,
+	timeout = 0,
+	whileDead = true,
+	hideOnEscape = true
+}
 
 -- Define the grid creation function
 function UnitFramesImproved:CreateGrid(spacing)
