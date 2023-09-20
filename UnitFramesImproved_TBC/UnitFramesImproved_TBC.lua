@@ -48,6 +48,10 @@ local defaultUnitFramesImprovedDB = {
 	GridSize = 30,
 	enablemoveunitframe = false,
 	targetbuffplacement = 1,
+	partybufffilter = false,
+	showTargetofParty = true,
+	showPartyCastbar = true,
+	improvedcastbar = true,
 }
 
 
@@ -141,7 +145,7 @@ local options = {
 		enablemoveunitframe = {
 			type = "toggle",
 			name = "Enable/disable the Move Frame feature",
-			desc = "Drag them with shift or ctrl and left click",
+			desc = "Drag them with alt and left click",
 			order = 4,
 			width = "full",
 			get = function()
@@ -154,6 +158,72 @@ local options = {
 				UnitFramesImprovedDB.enablemoveunitframe = value
 			end,
 				},
+		partybufffilter = {
+			type = "toggle",
+			name = "Enable/disable Party Buffs Filter",
+			desc = "Filter Party Buffs to just show your own buffs",
+			order = 5,
+			width = "full",
+			get = function()
+				if UnitFramesImprovedDB.partybufffilter == nil then
+					UnitFramesImprovedDB.partybufffilter = defaultUnitFramesImprovedDB.partybufffilter -- Set the default index
+				end
+					return UnitFramesImprovedDB.partybufffilter
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.partybufffilter = value
+			end,
+				},
+		showTargetofParty = {
+				type = "toggle",
+				name = "Enable party targets",
+				desc = "Show party targets",
+				order = 6,
+				width = "full",
+				get = function()
+				if UnitFramesImprovedDB.showTargetofParty == nil then
+					UnitFramesImprovedDB.showTargetofParty = defaultUnitFramesImprovedDB.showTargetofParty -- Set the default index
+				end
+					return UnitFramesImprovedDB.showTargetofParty
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.showTargetofParty = value
+			end,
+			},
+			
+			showPartyCastbar = {
+				order = 7,
+				name = "Show party castbar",
+				desc = "Show the CastBar of the party members",
+				type = "toggle",
+				width = "full",
+				get = function()
+				if UnitFramesImprovedDB.showPartyCastbar == nil then
+					UnitFramesImprovedDB.showPartyCastbar = defaultUnitFramesImprovedDB.showPartyCastbar -- Set the default index
+				end
+					return UnitFramesImprovedDB.showPartyCastbar
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.showPartyCastbar = value
+			end,
+			},
+			
+			improvedcastbar = {
+				order = 8,
+				name = "Improved Player's CastBar",
+				desc = "It remove the texture of the Player CastBar",
+				type = "toggle",
+				width = "full",
+				get = function()
+				if UnitFramesImprovedDB.improvedcastbar == nil then
+					UnitFramesImprovedDB.improvedcastbar = defaultUnitFramesImprovedDB.improvedcastbar -- Set the default index
+				end
+					return UnitFramesImprovedDB.improvedcastbar
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.improvedcastbar = value
+			end,
+			},
 	},
 },
 	optionframetwo = {
@@ -307,7 +377,7 @@ local options = {
                 UnitFramesImprovedDB.targetbuffsperrow = value
             end
 			},
-			
+		
 		targetbuffplacement = {
     type = "select",
     name = "Target Buff Placement",
@@ -831,18 +901,43 @@ RegisterOptions()
 
 -- Event listener to make sure we enable the addon at the right time
 function UnitFramesImproved:PLAYER_ENTERING_WORLD()
-	if not UnitFramesImprovedDB.playerframe
-	or not UnitFramesImprovedDB.targetframe
-	or not UnitFramesImprovedDB.focusframe
-	or not UnitFramesImprovedDB.buffframe
-	or not UnitFramesImprovedDB.partyframe
-	or not UnitFramesImprovedDB.largeBuffSize
-	or not UnitFramesImprovedDB.smallBuffSize
-	or not UnitFramesImprovedDB.targetbuffsperrow
-	then
-        UnitFramesImprovedDB = defaultUnitFramesImprovedDB 
+	if UnitFramesImprovedDB.playerframe == nil then
+        UnitFramesImprovedDB.playerframe = defaultUnitFramesImprovedDB.playerframe
     end
-	
+	if UnitFramesImprovedDB.targetframe == nil then
+        UnitFramesImprovedDB.targetframe = defaultUnitFramesImprovedDB.targetframe
+    end
+	if UnitFramesImprovedDB.focusframe == nil then
+        UnitFramesImprovedDB.focusframe = defaultUnitFramesImprovedDB.focusframe
+    end
+	if UnitFramesImprovedDB.buffframe == nil then
+        UnitFramesImprovedDB.buffframe = defaultUnitFramesImprovedDB.buffframe
+    end
+	if UnitFramesImprovedDB.partyframe == nil then
+        UnitFramesImprovedDB.partyframe = defaultUnitFramesImprovedDB.partyframe
+    end
+	if UnitFramesImprovedDB.largeBuffSize == nil then
+        UnitFramesImprovedDB.largeBuffSize = defaultUnitFramesImprovedDB.largeBuffSize
+    end
+	if UnitFramesImprovedDB.smallBuffSize == nil then
+        UnitFramesImprovedDB.smallBuffSize = defaultUnitFramesImprovedDB.smallBuffSize
+    end
+	if UnitFramesImprovedDB.targetbuffsperrow == nil then
+        UnitFramesImprovedDB.targetbuffsperrow = defaultUnitFramesImprovedDB.targetbuffsperrow
+    end
+	if UnitFramesImprovedDB.partybufffilter == nil then
+        UnitFramesImprovedDB.partybufffilter = defaultUnitFramesImprovedDB.partybufffilter
+    end
+	if UnitFramesImprovedDB.showTargetofParty == nil then
+        UnitFramesImprovedDB.showTargetofParty = defaultUnitFramesImprovedDB.showTargetofParty
+    end
+	if UnitFramesImprovedDB.showPartyCastbar == nil then
+        UnitFramesImprovedDB.showPartyCastbar = defaultUnitFramesImprovedDB.showPartyCastbar
+    end
+	if UnitFramesImprovedDB.improvedcastbar == nil then
+        UnitFramesImprovedDB.improvedcastbar = defaultUnitFramesImprovedDB.improvedcastbar
+    end
+
 
 	-- Set some default settings
 	if (characterSettings == nil) then
@@ -878,6 +973,7 @@ TargetName:SetPoint("CENTER",-50,38);
 TargetFrameHealthBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 TargetFrameHealthBarText:SetPoint("TOP", -50,-33);
 TargetFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
+TargetFrameSpellBarText:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
 
 FocusFrame:SetScale(UnitFramesImprovedDB.focusframe)
 FocusName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
@@ -894,19 +990,152 @@ FocusFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 	
 ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
 
+if UnitFramesImprovedDB.improvedcastbar then
+CastingBarFrameBorder:Hide()
+CastingBarFrameFlash:SetTexture(nil)
+CastingBarFrame:SetHeight(15)
+CastingBarFrameText:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+CastingBarFrameText:ClearAllPoints()
+CastingBarFrameText:SetPoint("CENTER", CastingBarFrame, "CENTER", 0, 2)
+end
+
+updateIconFrame()
+updateTimerFrame()
+
 self:ReloadVisual("largeBuffSize")
 self:ReloadVisual("smallBuffSize")
+self:ReloadVisual("showTargetofParty")
+self:ReloadVisual("showPartyCastbar")
 UnitFramesImprovedDB.EnableGrid = false
 self:CallBuffType()
 end
 
 
+local iconFrame = CreateFrame("Frame", nil, CastingBarFrame)
+local iconTexture = iconFrame:CreateTexture(nil, "BACKGROUND")
+iconTexture:SetAllPoints(iconFrame)
+
+function updateIconFrame()
+    if UnitFramesImprovedDB.improvedcastbar then
+        iconFrame:SetSize(23, 23)  -- Set the size for the icon
+        iconFrame:SetPoint("LEFT", CastingBarFrame, "LEFT", -30, 0) -- Set the position for the icon
+    else
+        iconFrame:SetSize(26, 26)  -- Set the size for the icon
+        iconFrame:SetPoint("LEFT", CastingBarFrame, "LEFT", -35, 2)
+    end
+end
+
+
+local eventFrame = CreateFrame("Frame");
+eventFrame:Hide();
+eventFrame.castingInfo = {};
+eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED");
+eventFrame:RegisterEvent("UNIT_SPELLCAST_START");
+eventFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START");
+eventFrame:RegisterEvent("UNIT_SPELLCAST_STOP");
+eventFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP");
+
+eventFrame:SetScript("OnEvent",
+    function( self, event, arg1 )
+        if ( event == "UNIT_SPELLCAST_START" ) then
+            local _, _, text, icon = UnitCastingInfo(arg1);
+            if arg1 == "player" then  -- Check if the unit is the player
+                iconTexture:SetTexture(icon)  -- Set the icon texture
+                iconFrame:Show()  -- Show the icon frame
+            end
+
+        elseif ( event == "UNIT_SPELLCAST_CHANNEL_START" ) then
+            local _, _, text, icon = UnitChannelInfo(arg1);
+            if arg1 == "player" then  -- Check if the unit is the player
+                iconTexture:SetTexture(icon)  -- Set the icon texture
+                iconFrame:Show()  -- Show the icon frame
+            end
+        elseif ( event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP") then
+            if arg1 == "player" then
+                iconFrame:Hide()  -- Hide the icon frame
+            end
+        elseif ( event == "PLAYER_TARGET_CHANGED" ) then
+            local _, _, text = UnitCastingInfo("target");
+            if not ( text ) then
+                _, _, text = UnitChannelInfo("target");
+            end
+        else
+            self.castingInfo[arg1] = nil;
+        end
+    end
+);
+
+
+local t = TargetFrameSpellBar
+t.timer = t:CreateFontString(nil, "OVERLAY")
+t.timer:SetFontObject("GameTooltipTextSmall")
+t.timer:SetShadowColor(0, 0, 0)
+t.timer:SetShadowOffset(1, -1)
+t.timer:SetPoint("RIGHT", t, -3, 0)
+t.update = .1
+TargetFrameSpellBar.timer:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE");
+-- Player
+local t = CastingBarFrame
+t.timer = t:CreateFontString(nil, "OVERLAY")
+t.timer:SetFontObject("GameTooltipTextSmall")
+t.timer:SetShadowColor(0, 0, 0)
+t.timer:SetShadowOffset(1, -1)
+function updateTimerFrame()
+	if UnitFramesImprovedDB.improvedcastbar then
+		t.timer:SetPoint("RIGHT", t, -3, 0)
+	else
+		t.timer:SetPoint("RIGHT", t, -3, 2)
+	end
+end
+t.update = .1
+CastingBarFrame.timer:SetFont("Fonts\\FRIZQT__.TTF", 14, "OUTLINE");
+local function TextTimer(self, elapsed)
+    if not self.timer then
+        return
+    end
+    if self.update and self.update < elapsed then
+        if self.casting then
+            self.timer:SetText(string.format("%.1f", math.max(self.maxValue - GetTime(), 0)))
+        elseif self.channeling then
+            self.timer:SetText(string.format("%.1f", math.max(self.endTime - GetTime(), 0)))
+        else
+            self.timer:SetText("")
+        end
+        self.update = .1
+    else
+        self.update = self.update - elapsed
+    end
+end
+TargetFrameSpellBar:HookScript("OnUpdate", TextTimer)
+CastingBarFrame:HookScript("OnUpdate", TextTimer) -- Player
 
 function UnitFramesImproved:ReloadVisual(arg)
     if (arg == "largeBuffSize") then
         LARGE_BUFF_SIZE = UnitFramesImprovedDB.largeBuffSize
     elseif (arg == "smallBuffSize") then
         SMALL_BUFF_SIZE = UnitFramesImprovedDB.smallBuffSize
+	elseif (arg == "showPartyCastbar") then
+        for i = 1, MAX_PARTY_MEMBERS do
+            local castBar = getglobal("PartySpellBar" .. i)
+            if (UnitFramesImprovedDB.showPartyCastbar) then
+                if (castBar.casting or castBar.channeling) then
+                    castBar:Show()
+                end
+                castBar.showCastbar = true
+            else
+                castBar:Hide()
+                castBar.showCastbar = false
+            end
+        end
+
+    elseif (arg == "showTargetofParty") then
+        for i = 1, MAX_PARTY_MEMBERS do
+            if (UnitFramesImprovedDB.showTargetofParty) then
+                RegisterStateDriver(getglobal("TargetofPartyFrame" .. i), "visibility", "[target=party" .. i .. "target,noexists]hide;show")
+            else
+                RegisterStateDriver(getglobal("TargetofPartyFrame" .. i), "visibility", "hide")
+            end
+        end
 	end
 end
 
@@ -2574,3 +2803,4 @@ function UnitFramesImproved_HealthBarTexture(NAME_TEXTURE)
 	for i=1,4 do _G["PartyMemberFrame"..i.."HealthBar"]:SetStatusBarTexture(NAME_TEXTURE)end
 	for i=1,4 do _G["PartyMemberFrame"..i.."ManaBar"]:SetStatusBarTexture(NAME_TEXTURE)end
 end
+
