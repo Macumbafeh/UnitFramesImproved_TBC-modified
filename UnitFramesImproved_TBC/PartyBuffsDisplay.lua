@@ -188,14 +188,14 @@ function SPB.PositionButtons(name, index, frame, btype)
     if ( btype == "Buff" ) then	
         if ( index == 1 ) then
             button:SetPoint("TOPLEFT", getglobal(frame), "TOPLEFT", 0, 0);
-        elseif ( index == 7 ) then
+        elseif ( index == 10 ) then
             button:SetPoint("TOPLEFT", getglobal(name.."1"), "BOTTOMLEFT", 0, -2);
-		elseif ( index == 12 ) then
-            button:SetPoint("TOPLEFT", getglobal(name.."6"), "BOTTOMLEFT", 0, -2);
+		--[[elseif ( index == 13 ) then
+            button:SetPoint("TOPLEFT", getglobal(name.."7"), "BOTTOMLEFT", 0, -2);
 		elseif ( index == 17 ) then
-            button:SetPoint("TOPLEFT", getglobal(name.."11"), "BOTTOMLEFT", 0, -2);
-		elseif ( index == 22 ) then
-            button:SetPoint("TOPLEFT", getglobal(name.."16"), "BOTTOMLEFT", 0, -2);
+            button:SetPoint("TOPLEFT", getglobal(name.."13"), "BOTTOMLEFT", 0, -2);
+		elseif ( index == 23 ) then
+            button:SetPoint("TOPLEFT", getglobal(name.."17"), "BOTTOMLEFT", 0, -2);]]
         else
             button:SetPoint("TOPLEFT", getglobal(name..(index - 1)), "TOPRIGHT", 2, 0);
         end

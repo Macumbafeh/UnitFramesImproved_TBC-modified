@@ -139,14 +139,29 @@ function SetPartySpellbarAspect()
 	end
 end
 
+
 function Party_Spellbar_AdjustPosition()
-	local id = this:GetID();
-	local yPos = 0;
-	if ( getglobal("PartyMemberFrame"..id.."PetFrame"):IsShown() ) then
-		yPos = yPos - 18;
-	end
-	this:SetPoint("TOP", "PartyMemberFrame"..id, "BOTTOM", 5, yPos);
+    local id = this:GetID();
+    local yPos = 0;
+
+	 -- Check if the party member has more than 10 buffs (second row)
+	local buffCount = 0
+    while (UnitBuff("party" .. id, buffCount + 1)) do
+        buffCount = buffCount + 1
+    end
+    
+    -- Check if the party member has a pet
+    if ( getglobal("PartyMemberFrame"..id.."PetFrame"):IsShown() ) or ( buffCount >= 11 ) then
+        yPos = yPos - 18;
+    end
+
+   
+    
+
+    -- Adjust the position
+    this:SetPoint("TOP", "PartyMemberFrame"..id, "BOTTOM", 5, yPos);
 end
+
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")

@@ -52,6 +52,12 @@ local defaultUnitFramesImprovedDB = {
 	showTargetofParty = true,
 	showPartyCastbar = true,
 	improvedcastbar = true,
+	durabilityFrame = 1.3,
+	questWatchFrame = 1.0,
+	minimapCluster = 1.0,
+	totemFrame = 1.0,
+	castingBarFrame = 1.0,
+	mirrorTimer1 = 1.0,
 }
 
 
@@ -329,8 +335,128 @@ local options = {
                 UnitFramesImprovedDB.partyframe = value
             end
 				},
+		durabilityFrame = {
+            type = "range",
+            name = "Durability Frame scale",
+			order = 6,
+			-- width = "full",
+            desc = "Set the scale of the Durability Frame (when your equipment is broken)",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.durabilityFrame == nil then
+				UnitFramesImprovedDB.durabilityFrame = defaultUnitFramesImprovedDB.durabilityFrame 
+				end
+                return UnitFramesImprovedDB.durabilityFrame
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.durabilityFrame = value
+            end
+				},
+		
+		questWatchFrame = {
+            type = "range",
+            name = "QuestWatchFrame scale",
+			order = 7,
+			-- width = "full",
+            desc = "Set the scale of the QuestWatchFrame (Quest Tracker frame)",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.questWatchFrame == nil then
+				UnitFramesImprovedDB.questWatchFrame = defaultUnitFramesImprovedDB.questWatchFrame 
+				end
+                return UnitFramesImprovedDB.questWatchFrame
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.questWatchFrame = value
+            end
+				},
+		
+		minimapCluster = {
+            type = "range",
+            name = "Minimap scale",
+			order = 8,
+			-- width = "full",
+            desc = "Set the scale of the MinimapCluster Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.minimapCluster == nil then
+				UnitFramesImprovedDB.minimapCluster = defaultUnitFramesImprovedDB.minimapCluster 
+				end
+                return UnitFramesImprovedDB.minimapCluster
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.minimapCluster = value
+            end
+				},
+		
+		totemFrame = {
+            type = "range",
+            name = "TotemFrame scale",
+			order = 8,
+			-- width = "full",
+            desc = "Set the scale of the TotemFrame (Totems duration), You will need to summon your totems again to see the TotemFrame after a Reload!",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.totemFrame == nil then
+				UnitFramesImprovedDB.totemFrame = defaultUnitFramesImprovedDB.totemFrame 
+				end
+                return UnitFramesImprovedDB.totemFrame
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.totemFrame = value
+            end
+				},
+		
+		castingBarFrame = {
+            type = "range",
+            name = "CastingBarFrame scale",
+			order = 9,
+			-- width = "full",
+            desc = "Set the scale of the Player's CastingBar Frame",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.castingBarFrame == nil then
+				UnitFramesImprovedDB.castingBarFrame = defaultUnitFramesImprovedDB.castingBarFrame 
+				end
+                return UnitFramesImprovedDB.castingBarFrame
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.castingBarFrame = value
+            end
+				},
+		
+		mirrorTimer1 = {
+            type = "range",
+            name = "MirrorTimer1 Frame scale",
+			order = 10,
+			-- width = "full",
+            desc = "Set the scale of the MirrorTimer1 Frame (Breath / Fatigue timer)",
+            min = 0,
+            max = 2,
+            step = 0.1,
+            get = function()
+				if UnitFramesImprovedDB.mirrorTimer1 == nil then
+				UnitFramesImprovedDB.mirrorTimer1 = defaultUnitFramesImprovedDB.mirrorTimer1 
+				end
+                return UnitFramesImprovedDB.mirrorTimer1
+            end,
+            set = function(info, value)
+                UnitFramesImprovedDB.mirrorTimer1 = value
+            end
+				},
+				
 		largeBuffSize = {
-				order = 6,
+				order = 12,
 				name = "Large buff size",
 				desc = "Set the size of your own debuff on the Target Frame",
 				type = "range",
@@ -346,7 +472,7 @@ local options = {
             end
 			},
 		smallBuffSize = {
-				order = 7,
+				order = 13,
 				name = "Small buff size",
 				type = "range",
 				desc = "Set the size of other players debuff on the Target Frame",
@@ -362,7 +488,7 @@ local options = {
             end
 			},
 		targetbuffsperrow = {
-				order = 8,
+				order = 14,
 				name = "Target buffs per row",
 				type = "range",
 				desc = "Set the amount of buffs per lines",
@@ -401,7 +527,7 @@ local options = {
 	-- BuffOnTop and DebuffOnBot
 	"|TInterface\\CHATFRAME\\UI-ChatIcon-Minimize-Up:15:15|t Buffs Above and Debuffs Below the Target Frame",
 	},
-    order = 9,
+    order = 15,
     width = "full",            
  },
 		SaveAndReload = {
@@ -427,7 +553,7 @@ local options = {
 
         StaticPopup_Show("CONFIRM_RELOADUI")
     end,
-    order = 10,
+    order = 16,
 		},
 	},
 		},
@@ -937,8 +1063,25 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	if UnitFramesImprovedDB.improvedcastbar == nil then
         UnitFramesImprovedDB.improvedcastbar = defaultUnitFramesImprovedDB.improvedcastbar
     end
-
-
+	if UnitFramesImprovedDB.durabilityFrame == nil then
+        UnitFramesImprovedDB.durabilityFrame = defaultUnitFramesImprovedDB.durabilityFrame
+    end
+	if UnitFramesImprovedDB.questWatchFrame == nil then
+        UnitFramesImprovedDB.questWatchFrame = defaultUnitFramesImprovedDB.questWatchFrame
+    end
+	if UnitFramesImprovedDB.minimapCluster == nil then
+        UnitFramesImprovedDB.minimapCluster = defaultUnitFramesImprovedDB.minimapCluster
+    end
+	if UnitFramesImprovedDB.totemFrame == nil then
+        UnitFramesImprovedDB.totemFrame = defaultUnitFramesImprovedDB.totemFrame
+    end
+	if UnitFramesImprovedDB.castingBarFrame == nil then
+        UnitFramesImprovedDB.castingBarFrame = defaultUnitFramesImprovedDB.castingBarFrame
+    end
+	if UnitFramesImprovedDB.mirrorTimer1 == nil then
+        UnitFramesImprovedDB.mirrorTimer1 = defaultUnitFramesImprovedDB.mirrorTimer1
+    end
+	
 	-- Set some default settings
 	if (characterSettings == nil) then
 		UnitFramesImproved_LoadDefaultSettings();
@@ -947,7 +1090,12 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	EnableUnitFramesImproved();
 		-- Interface
 BuffFrame:SetScale(UnitFramesImprovedDB.buffframe)
-
+DurabilityFrame:SetScale(UnitFramesImprovedDB.durabilityFrame)
+QuestWatchFrame:SetScale(UnitFramesImprovedDB.questWatchFrame)
+MinimapCluster:SetScale(UnitFramesImprovedDB.minimapCluster)
+TotemFrame:SetScale(UnitFramesImprovedDB.totemFrame)
+CastingBarFrame:SetScale(UnitFramesImprovedDB.castingBarFrame)
+MirrorTimer1:SetScale(UnitFramesImprovedDB.mirrorTimer1)
 
 for i=1,4 do _G["PartyMemberFrame"..i.."HealthBarText"]:SetFont("Fonts\\FRIZQT__.TTF", 7, "OUTLINE")end
 for i=1,4 do _G["PartyMemberFrame"..i.."HealthBarText"]:SetPoint("TOP", 20, -13)end
@@ -989,6 +1137,8 @@ FocusFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 	end
 	
 ComboFrame:SetScale(UnitFramesImprovedDB.targetframe)
+PetFrameHealthBarText:SetFont("Fonts\\FRIZQT__.TTF", 8.5, "OUTLINE");
+PetFrameManaBarText:SetFont("Fonts\\FRIZQT__.TTF", 8.5, "OUTLINE");
 
 if UnitFramesImprovedDB.improvedcastbar then
 CastingBarFrameBorder:Hide()
@@ -1008,6 +1158,9 @@ self:ReloadVisual("showTargetofParty")
 self:ReloadVisual("showPartyCastbar")
 UnitFramesImprovedDB.EnableGrid = false
 self:CallBuffType()
+
+CreateStatusTextForPartyTargets()
+
 end
 
 
@@ -1151,6 +1304,63 @@ function UnitFramesImproved:CallBuffType()
 		BuffSizer_TargetBuffTopDebuffBot()
 	end
 end
+
+
+
+function CreateStatusTextForPartyTargets()
+    for i = 1, MAX_PARTY_MEMBERS do
+        local statusFrame = _G["TargetofPartyFrame" .. i]
+        local healthBar = _G["PartyMemberFrame"..i.."HealthBar"]
+        local manaBar = _G["PartyMemberFrame"..i.."ManaBar"]
+		local name = _G["TargetofPartyFrame"..i.."Name"]
+
+        if healthBar and manaBar and statusFrame then
+            local healthBarText = healthBar:CreateFontString(nil, "OVERLAY")
+            local manaBarText = manaBar:CreateFontString(nil, "OVERLAY")
+
+            if healthBarText and manaBarText then
+                healthBarText:SetPoint("CENTER", statusFrame, "CENTER", -15, 11)
+                manaBarText:SetPoint("CENTER", statusFrame, "CENTER", -15, 3)
+
+                healthBarText:SetFont("Fonts\\FRIZQT__.TTF", 7, "OUTLINE")
+                manaBarText:SetFont("Fonts\\FRIZQT__.TTF", 7, "OUTLINE")
+				name:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
+				
+                statusFrame.healthBarText = healthBarText
+                statusFrame.manaBarText = manaBarText
+            end
+        end
+    end
+end
+
+
+
+function UpdateStatusTextForPartyTargets()
+    for i = 1, MAX_PARTY_MEMBERS do
+        local statusFrame = _G["TargetofPartyFrame" .. i]
+        local unit = "party" .. i .. "target"
+
+        if UnitExists(unit) then
+            if statusFrame and statusFrame.healthBarText and statusFrame.manaBarText then
+                statusFrame.healthBarText:SetText(UnitHealth(unit) .. " / " .. UnitHealthMax(unit))
+                statusFrame.manaBarText:SetText(UnitMana(unit) .. " / " .. UnitManaMax(unit))
+            end
+        else
+            if statusFrame and statusFrame.healthBarText and statusFrame.manaBarText then
+                statusFrame.healthBarText:SetText("")
+                statusFrame.manaBarText:SetText("")
+            end
+        end
+    end
+end
+
+
+
+local statutframe = CreateFrame("Frame", "StatusFrame", UIParent)
+
+statutframe:SetScript("OnUpdate", function(self, elapsed)
+    UpdateStatusTextForPartyTargets()
+end)
 
 -- Create a table to store indicators for all frames
 local moveIndicators = {}
