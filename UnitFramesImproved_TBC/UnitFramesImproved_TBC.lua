@@ -58,6 +58,7 @@ local defaultUnitFramesImprovedDB = {
 	totemFrame = 1.0,
 	castingBarFrame = 1.0,
 	mirrorTimer1 = 1.0,
+	ClassPortrait = true,
 }
 
 
@@ -228,6 +229,22 @@ local options = {
 				end,
 			set = function(_, value)
 				UnitFramesImprovedDB.improvedcastbar = value
+			end,
+			},
+			ClassPortrait = {
+				order = 9,
+				name = "Class Portraits",
+				desc = "Change the Portrait to display Class icon",
+				type = "toggle",
+				width = "full",
+				get = function()
+				if UnitFramesImprovedDB.ClassPortrait == nil then
+					UnitFramesImprovedDB.ClassPortrait = defaultUnitFramesImprovedDB.ClassPortrait -- Set the default index
+				end
+					return UnitFramesImprovedDB.ClassPortrait
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.ClassPortrait = value
 			end,
 			},
 	},
@@ -1080,6 +1097,9 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
     end
 	if UnitFramesImprovedDB.mirrorTimer1 == nil then
         UnitFramesImprovedDB.mirrorTimer1 = defaultUnitFramesImprovedDB.mirrorTimer1
+    end
+	if UnitFramesImprovedDB.ClassPortrait == nil then
+        UnitFramesImprovedDB.ClassPortrait = defaultUnitFramesImprovedDB.ClassPortrait
     end
 	
 	-- Set some default settings

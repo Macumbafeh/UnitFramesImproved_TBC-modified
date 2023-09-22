@@ -24,3 +24,4 @@ skin\method.lua
 UnitFramesImproved_TBC.lua
 extramana.lua
 energyandmanaticks.lua
+classportrait.lua
