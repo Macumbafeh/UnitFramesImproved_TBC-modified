@@ -14,7 +14,6 @@ embeds.xml
 libs\AceLibrary\AceLibrary.lua
 libs\AceOO-2.0\AceOO-2.0.lua
 libs\AceEvent-2.0\AceEvent-2.0.lua
---libs\DruidManaLib-1.0\DruidManaLib-1.0.lua
 libs\LibDruidMana-1.0\LibDruidMana-1.0.lua
 PartyBuffsDisplay.xml
 ExtendedPartyFrame.xml
