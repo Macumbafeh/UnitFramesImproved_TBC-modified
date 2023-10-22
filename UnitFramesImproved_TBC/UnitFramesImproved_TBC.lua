@@ -59,6 +59,7 @@ local defaultUnitFramesImprovedDB = {
 	castingBarFrame = 1.0,
 	mirrorTimer1 = 1.0,
 	ClassPortrait = true,
+	HealthColor = true,
 }
 
 
@@ -245,6 +246,22 @@ local options = {
 				end,
 			set = function(_, value)
 				UnitFramesImprovedDB.ClassPortrait = value
+			end,
+			},
+			HealthColor = {
+				order = 10,
+				name = "Health Colors",
+				desc = "Change health bar color based on its value, Works on your health bar and friendly healthbar if Class bar aren't enabled",
+				type = "toggle",
+				width = "full",
+				get = function()
+				if UnitFramesImprovedDB.HealthColor == nil then
+					UnitFramesImprovedDB.HealthColor = defaultUnitFramesImprovedDB.HealthColor -- Set the default index
+				end
+					return UnitFramesImprovedDB.HealthColor
+				end,
+			set = function(_, value)
+				UnitFramesImprovedDB.HealthColor = value
 			end,
 			},
 	},
@@ -1101,6 +1118,9 @@ function UnitFramesImproved:PLAYER_ENTERING_WORLD()
 	if UnitFramesImprovedDB.ClassPortrait == nil then
         UnitFramesImprovedDB.ClassPortrait = defaultUnitFramesImprovedDB.ClassPortrait
     end
+	if UnitFramesImprovedDB.HealthColor == nil then
+        UnitFramesImprovedDB.HealthColor = defaultUnitFramesImprovedDB.HealthColor
+    end
 	
 	-- Set some default settings
 	if (characterSettings == nil) then
@@ -1181,6 +1201,9 @@ self:CallBuffType()
 
 CreateStatusTextForPartyTargets()
 
+if UnitFramesImprovedDB.HealthColor then
+HealthColor()
+end
 end
 
 
@@ -2004,51 +2027,70 @@ local altKeyFrame = CreateFrame("Frame")
 altKeyFrame:SetScript("OnUpdate", function()
 	if IsAltKeyDown() and UnitFramesImprovedDB.enablemoveunitframe then
 		Minimap:EnableMouse(false)
+		CustomDebuffFrame2:EnableMouse(true)
+		TemporaryEnchantFrame:EnableMouse(true)
+		BuffFrame:EnableMouse(true)
 		for i = 1, 6 do
+		if not InCombatLockdown() then 
             local shapeshiftButton = _G["PetActionButton" .. i]
             if shapeshiftButton then
                 shapeshiftButton:EnableMouse(false)
             end
+		end
         end
 		for i = 1, 10 do
+		if not InCombatLockdown() then 
             local petActionButton = _G["PetActionButton" .. i]
             if petActionButton then
                 petActionButton:EnableMouse(false)
             end
+		end
         end
 		for i = 1, 32 do
+		if not InCombatLockdown() then 
             local buffButton = _G["BuffButton" .. i]
             if buffButton then
                 buffButton:EnableMouse(false)
             end
+		end
         end
 		for i = 1, 2 do
+		if not InCombatLockdown() then 
             local TempEnchant = _G["TempEnchant" .. i]
             if TempEnchant then
                 TempEnchant:EnableMouse(false)
             end
+		end
         end
 		for i = 1, 4 do
+		if not InCombatLockdown() then 
             local totemFrameTotem = _G["TotemFrameTotem" .. i]
             if totemFrameTotem then
                 totemFrameTotem:EnableMouse(false)
             end
 		end
+		end
 		for i = 1, 10 do
+		if not InCombatLockdown() then 
             local possessButton = _G["PossessButton" .. i]
             if possessButton then
                 possessButton:EnableMouse(false)
             end
 		end
+		end
 		for i = 1, 10 do
+		if not InCombatLockdown() then 
             local dragFrameWorldStateCaptureBars = DragFrameWorldStateCaptureBars
             if dragFrameWorldStateCaptureBars then
                 dragFrameWorldStateCaptureBars:EnableMouse(true)
             end
 		end
+		end
 		
 	else 
-	
+		CustomDebuffFrame2:EnableMouse(false)
+		TemporaryEnchantFrame:EnableMouse(false)
+		BuffFrame:EnableMouse(false)
 		Minimap:EnableMouse(true)
 		for i = 1, 6 do
             local shapeshiftButton = _G["PetActionButton" .. i]
@@ -2205,14 +2247,14 @@ function EnableUnitFramesImproved()
 	UnitFramesImproved_DarkMode();
 	--UnitFramesImproved_HealthBarTexture(FLAT_TEXTURE);
 
-	PlayerName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
-	TargetName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
-	FocusName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
+	-- PlayerName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
+	-- TargetName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
+	-- FocusName:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE");
 
 	--PlayerFrameHealthBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
 	--PlayerFrameManaBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
-	PetFrameHealthBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
-	PetFrameManaBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
+	-- PetFrameHealthBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
+	-- PetFrameManaBarText:SetFont(STANDARD_TEXT_FONT, 11, 'OUTLINE');
 
 end
 
@@ -2299,7 +2341,9 @@ end
 
 function UnitFramesImproved_ColorUpdate(self)
 	--if this == PlayerFrameHealthBar then
+		if not UnitFramesImprovedDB.HealthColor then
 		PlayerFrameHealthBar:SetStatusBarColor(UnitColor("player"));
+		end
 	--else
 	--	this.healthbar:SetStatusBarColor(UnitColor(this.healthbar.unit));
 	--end
@@ -2317,7 +2361,9 @@ function UnitFramesImproved_Style_PlayerFrame()
 	
 	PlayerFrameTexture:SetTexture("Interface\\Addons\\UnitFramesImproved_TBC\\Textures\\UI-TargetingFrame");
 	PlayerStatusTexture:SetTexture("Interface\\Addons\\UnitFramesImproved_TBC\\Textures\\UI-Player-Status");
+	if not UnitFramesImprovedDB.HealthColor then
 	PlayerFrameHealthBar:SetStatusBarColor(UnitColor("player"));
+	end
 end
 
 function UnitFramesImproved_Style_TargetFrame(self)
@@ -2799,6 +2845,115 @@ function UnitFramesImproved_FocusFrame_CheckFaction(self)
 	UnitFramesImproved_Style_FocusFrame(this.unit);
 end
 
+local gradientcolors = {}
+UnitFramesImproved.GetColorGradient = function(perc)
+  perc = perc > 1 and 1 or perc
+  perc = perc < 0 and 0 or perc
+  perc = floor(perc*100)/100
+
+  local index = perc
+  if not gradientcolors[index] then
+    local r1, g1, b1, r2, g2, b2
+
+    if perc <= 0.5 then
+      perc = perc * 2
+      r1, g1, b1 = 1, 0, 0
+      r2, g2, b2 = 1, 1, 0
+    else
+      perc = perc * 2 - 1
+      r1, g1, b1 = 1, 1, 0
+      r2, g2, b2 = 0, 1, 0
+    end
+
+    local r = UnitFramesImproved.round(r1 + (r2 - r1) * perc, 4)
+    local g = UnitFramesImproved.round(g1 + (g2 - g1) * perc, 4)
+    local b = UnitFramesImproved.round(b1 + (b2 - b1) * perc, 4)
+    local h = UnitFramesImproved.rgbhex(r,g,b)
+
+    gradientcolors[index] = {}
+    gradientcolors[index].r = r
+    gradientcolors[index].g = g
+    gradientcolors[index].b = b
+    gradientcolors[index].h = h
+  end
+
+  return gradientcolors[index].r,
+    gradientcolors[index].g,
+    gradientcolors[index].b,
+    gradientcolors[index].h
+end
+
+UnitFramesImproved.rgbhex = function(r, g, b, a)
+  if type(r) == "table" then
+    if r.r then
+      _r, _g, _b, _a = r.r, r.g, r.b, (r.a or 1)
+    elseif table.getn(r) >= 3 then
+      _r, _g, _b, _a = r[1], r[2], r[3], (r[4] or 1)
+    end
+  elseif tonumber(r) then
+    _r, _g, _b, _a = r, g, b, (a or 1)
+  end
+
+  if _r and _g and _b and _a then
+    -- limit values to 0-1
+    _r = _r + 0 > 1 and 1 or _r + 0
+    _g = _g + 0 > 1 and 1 or _g + 0
+    _b = _b + 0 > 1 and 1 or _b + 0
+    _a = _a + 0 > 1 and 1 or _a + 0
+    return string.format("|c%02x%02x%02x%02x", _a*255, _r*255, _g*255, _b*255)
+  end
+
+  return ""
+end
+
+UnitFramesImproved.round = function(input, places)
+  if not places then places = 0 end
+  if type(input) == "number" and type(places) == "number" then
+    local pow = 1
+    for i = 1, places do pow = pow * 10 end
+    return floor(input * pow + 0.5) / pow
+  end
+end
+
+UnitFramesImproved.Abbreviate = function(number, eachk)
+  local sign = number < 0 and -1 or 1
+  number = math.abs(number)
+
+  if number > 1000000 then
+    return UnitFramesImproved.round(number/1000000*sign,2) .. "m"
+  elseif not eachk and number > 10000 then
+    return UnitFramesImproved.round(number/1000*sign,2) .. "k"
+  elseif eachk and number > 1000 then
+    return UnitFramesImproved.round(number/1000*sign,2) .. "k"
+  end
+
+  return number
+end
+
+function HealthColor()
+local GetColorGradient = UnitFramesImproved.GetColorGradient
+local HookTextStatusBar_UpdateTextString = TextStatusBar_UpdateTextString
+function TextStatusBar_UpdateTextString(sb)
+  if not sb then sb = this end
+
+  HookTextStatusBar_UpdateTextString(sb)
+
+  local unit = sb.unit
+  if unit then
+    if (unit == "player" or (UnitIsPlayer(unit) and UnitIsFriend("player", unit))) then
+      local min, max = sb:GetMinMaxValues()
+      local cur = sb:GetValue()
+      local percent = max > 0 and floor(cur / max * 100) or 0
+
+      if strfind(sb:GetName(), "Health") then
+        local r, g, b = GetColorGradient(percent / 100)
+        sb:SetStatusBarColor(r, g, b, 1)
+      end
+    end
+  end
+end
+end
+
 -- Utility functions
 function UnitColor(unit)
     local r, g, b;
@@ -2815,8 +2970,12 @@ function UnitColor(unit)
             -- Color NPCs using the background color
             r, g, b = sr, sg, sb;
         end
-    elseif (UnitIsPlayer(unit) and UnitIsFriend("player", unit) and UnitFramesImprovedDB.ClassFriendlyTargetColor) or (UnitFramesImprovedDB.ClassTargetColor and UnitIsPlayer(unit) and not UnitIsFriend("player", unit)) then
-        if (classColor) then
+	elseif not UnitFramesImprovedDB.ClassFriendlyTargetColor and UnitIsConnected(unit)then
+		r, g, b = 0, 1.0, 0.0
+	elseif (unit == "player" and UnitFramesImprovedDB.HealthColor) and UnitIsConnected(unit) then
+		HealthColor()
+    elseif (UnitIsPlayer(unit) and UnitIsFriend("player", unit) and UnitFramesImprovedDB.ClassFriendlyTargetColor) or (UnitFramesImprovedDB.ClassTargetColor and UnitIsPlayer(unit) and not UnitIsFriend("player", unit)) or (unit == "player" and not UnitFramesImprovedDB.HealthColor) then
+		if (classColor) then
             r, g, b = classColor.r, classColor.g, classColor.b;
         else
             -- Color friendly players who don't have a class color as green
@@ -2826,13 +2985,15 @@ function UnitColor(unit)
             -- Color it gray
             r, g, b = 0.5, 0.5, 0.5;
 		end
+	elseif UnitIsFriend("pet", unit) then
+            r, g, b = 0.0, 1.0, 0.0;
     else
-        if UnitFramesImprovedDB.ClassTargetColor then
+        if UnitFramesImprovedDB.ClassTargetColor and UnitIsConnected(unit) then
 			r, g, b = 0, 1.0, 0.0; -- Color friendly players as green
 		elseif UnitFramesImprovedDB.ClassFriendlyTargetColor then
 			r, g, b = 1.0, 0.0, 0.0; -- Color enemy players as red
 		else
-			if UnitIsPlayer(unit) and UnitIsFriend("player", unit) then
+			if UnitIsPlayer(unit) and UnitIsFriend("player", unit) and UnitIsConnected(unit) then
 				r, g, b = 0, 1.0, 0.0; -- Color friendly players as green
 			elseif UnitIsPlayer(unit) and not UnitIsFriend("player", unit) then
 				r, g, b = 1.0, 0.0, 0.0; -- Color enemy players as red
