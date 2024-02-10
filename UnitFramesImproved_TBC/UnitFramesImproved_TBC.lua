@@ -1352,6 +1352,7 @@ end
 
 function CreateStatusTextForPartyTargets()
     for i = 1, MAX_PARTY_MEMBERS do
+		if (UnitFramesImprovedDB.showTargetofParty) then
         local statusFrame = _G["TargetofPartyFrame" .. i]
         local healthBar = _G["PartyMemberFrame"..i.."HealthBar"]
         local manaBar = _G["PartyMemberFrame"..i.."ManaBar"]
@@ -1373,6 +1374,7 @@ function CreateStatusTextForPartyTargets()
                 statusFrame.manaBarText = manaBarText
             end
         end
+		end
     end
 end
 
